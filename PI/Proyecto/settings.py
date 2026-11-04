@@ -1,5 +1,4 @@
 
-
 from pathlib import Path
 import os
 
@@ -14,7 +13,8 @@ SECRET_KEY = 'django-insecure-bz0$w*2yf2+6m!46mg6yz)a-08#==l7rl^k83h%xnxn@6)v1hk
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# Para probar WebPay en local con ngrok, agrega tu dominio *.ngrok-free.app
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.ngrok-free.app', '.ngrok.io']
 
 
 # Application definition
@@ -26,8 +26,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'tiendaApp',                
-    'webpay.apps.WebpayConfig'  
+    'tiendaApp',
+    'webpay',
 ]
 
 MIDDLEWARE = [
@@ -37,10 +37,10 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',  
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'Proyecto.urls'          
+ROOT_URLCONF = 'Proyecto.urls'
 
 TEMPLATES = [
     {
@@ -52,22 +52,21 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # Numerito del carrito en la barra de todas las páginas
                 'tiendaApp.context_processors.carrito_cantidad',
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'Proyecto.wsgi.application'   
+WSGI_APPLICATION = 'Proyecto.wsgi.application'
 
 
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
-#
-# ESTRATEGIA (documentada en el README): SQLite para desarrollar el sprint
-# actual; al cerrar el modelo de datos, se cambia al bloque Supabase de más
-# abajo (requiere: pip install "psycopg[binary]").
 
+import pymysql
+pymysql.install_as_MySQLdb()
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
@@ -77,21 +76,15 @@ DATABASES = {
     }
 }
 
-# ---- SUPABASE (PostgreSQL) -----------------------------------------------
-# Descomenta este bloque y COMENTA el de sqlite de arriba cuando toque migrar.
-# Los datos salen de Supabase: Project Settings -> Database -> Connection
-# string (usa la contraseña de la BD, NO la del panel).
-#
+# --- Para pasar a Supabase (PostgreSQL) cuando toque:
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql',
 #         'NAME': 'postgres',
 #         'USER': 'postgres',
-#         'PASSWORD': 'TU_PASSWORD_DE_SUPABASE',
-#         'HOST': 'db.TUPROYECTO.supabase.co',
+#         'PASSWORD': 'TU_CONTRASEÑA_SUPABASE',
+#         'HOST': 'db.TU-PROYECTO.supabase.co',
 #         'PORT': '5432',
-#         'CONN_MAX_AGE': 60,                     # reutiliza conexiones
-#         'OPTIONS': {'sslmode': 'require'},      # Supabase exige SSL
 #     }
 # }
 
@@ -115,48 +108,43 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
+# ------------------------------------------------------------- Autenticación
+# A dónde manda Django cuando una página pide login (@login_required)
+LOGIN_URL = 'login'
+# A dónde va el usuario después de iniciar sesión
+LOGIN_REDIRECT_URL = 'tiendaApp:home'
+# A dónde va después de cerrar sesión
+LOGOUT_REDIRECT_URL = 'tiendaApp:home'
+
+# RNF-05: cierre de sesión por inactividad (30 min en segundos).
+SESSION_COOKIE_AGE = 30 * 60
+SESSION_SAVE_EVERY_REQUEST = True  # el contador se reinicia con cada acción
+
+
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
 LANGUAGE_CODE = 'es'
 
-TIME_ZONE = 'America/Santiago'    # <- CORREGIDO (era UTC): proyecto chileno
+TIME_ZONE = 'America/Santiago'
 
 USE_I18N = True
 
 USE_TZ = True
 
 
-# Sesión — RNF-05: "cierre de sesión automático tras 15 minutos de
-# inactividad". SESSION_SAVE_EVERY_REQUEST hace que la cookie se renueve en
-# cada interacción => los 15 min cuentan desde la ÚLTIMA acción (si no,
-# contarían desde el login aunque el usuario estuviera activo).
-# TIP: coméntalas mientras desarrollas para no perder la sesión a cada rato.
-SESSION_COOKIE_AGE = 15 * 60          # 900 segundos
-SESSION_SAVE_EVERY_REQUEST = True
-
-
-# Autenticación (RF-07): dónde enviar al usuario sin sesión y a dónde
-# devolverlo tras iniciar sesión / cerrar sesión.
-LOGIN_URL = '/cuenta/login/'
-LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = '/'
-
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.1/howto/static-files/
 
 STATIC_URL = 'static/'
-STATICFILES_DIRS = [STATIC_DIR]
+if os.path.isdir(STATIC_DIR):
+    STATICFILES_DIRS = [STATIC_DIR]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Imágenes de productos (RF-01) — como en el taller: admin sube la imagen,
-# queda guardada en media/productos/ y las plantillas la muestran.
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-
-# Email — CORREGIDO: el setting de Django es EMAIL_BACKEND (no 'MAILERS').
-# Con 'console' los correos se imprimen en la consola de runserver (dev).
+# Email: mientras desarrollamos los correos se IMPRIMEN en la consola del
+# runserver (backend de consola). Ningún setting 'MAILERS' existe en Django.
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

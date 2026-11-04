@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Entregas · PetShop{% endblock %}
+{% block contenido %}
+<h1>📦 Pedidos web por entregar (RF-20)</h1>
+<p>Avanza el estado de cada entrega: preparando → en despacho / listo para
+   retiro → entregado.</p>
+
+{% if entregas %}
+    <table>
+        <tr><th>#</th><th>Venta</th><th>Cliente</th><th>Tipo</th><th>Dirección</th><th>Estado actual</th><th>Avanzar a</th></tr>
+        {% for entrega in entregas %}
+            <tr>
+                <td>{{ entrega.pk }}</td>
+                <td><a href="{% url 'tiendaApp:detalle_venta' entrega.venta_id %}">Venta #{{ entrega.venta_id }}</a>
+                    (${{ entrega.venta.total }})</td>
+                <td>{{ entrega.venta.cliente|default:"—" }}</td>
+                <td>{{ entrega.get_tipo_display }}</td>
+                <td>{{ entrega.direccion_entrega }}</td>
+                <td><span class="badge b-azul">{{ entrega.get_estado_display }}</span></td>
+                <td>
+                    <form method="post" style="display:flex;gap:.3rem">
+                        {% csrf_token %}
+                        <input type="hidden" name="entrega_id" value="{{ entrega.pk }}">
+                        <select name="nuevo_estado">
+                            {% for valor, nombre in estados_entrega %}
+                                <option value="{{ valor }}">{{ nombre }}</option>
+                            {% endfor %}
+                        </select>
+                        <button class="btn mini" type="submit">Actualizar</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p class="vacio">No hay pedidos web pendientes de entrega. 🎉</p>
+{% endif %}
+{% endblock %}

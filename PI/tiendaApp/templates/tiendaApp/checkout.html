@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Checkout · PetShop{% endblock %}
+{% block contenido %}
+<h1>Finalizar compra</h1>
+
+<div style="display:flex;gap:1.5rem;flex-wrap:wrap">
+    {# ------------- Resumen de lo que se está comprando ------------- #}
+    <div style="flex:1;min-width:300px">
+        <h2>Productos</h2>
+        <table>
+            <tr><th>Producto</th><th>Cant.</th><th>Subtotal</th></tr>
+            {% for linea in lineas %}
+                <tr>
+                    <td>{{ linea.producto.nombre }}</td>
+                    <td>{{ linea.cantidad }}</td>
+                    <td>${{ linea.subtotal }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+        <div class="resumen" style="margin-top:.8rem">
+            <p>Neto: ${{ neto }} · IVA: ${{ iva }}<br>
+               <strong style="font-size:1.1rem">Total a pagar: ${{ total }}</strong></p>
+        </div>
+    </div>
+
+    {# ------------- Formulario de entrega y documento ------------- #}
+    <div class="card" style="flex:1;min-width:320px">
+        <h2>Entrega y documento</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            {% for campo in form %}
+                <p>
+                    {{ campo.label_tag }}<br>
+                    {{ campo }}
+                    {% if campo.help_text %}<br><small style="color:#777">{{ campo.help_text }}</small>{% endif %}
+                    {% for e in campo.errors %}<br><span class="b-rojo badge">{{ e }}</span>{% endfor %}
+                </p>
+            {% endfor %}
+            <button class="btn" type="submit">Ir a pagar con WebPay →</button>
+        </form>
+        <p><small>Al continuar se creará tu pedido (PENDIENTE) y serás
+           redirigido a Transbank <em>sandbox</em> para pagar con la tarjeta
+           de prueba 4051 8856 0044 6623 · CVV 123.</small></p>
+    </div>
+</div>
+{% endblock %}

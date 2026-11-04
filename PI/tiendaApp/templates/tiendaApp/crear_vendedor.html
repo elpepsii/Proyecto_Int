@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}Crear vendedor · PetShop{% endblock %}
+{% block contenido %}
+<h1>➕ Crear vendedor (RF-12)</h1>
+<p>Solo el <strong>administrador</strong> crea cuentas de vendedor: los
+   clientes se registran solos desde "Crear cuenta".</p>
+
+<div style="display:flex;gap:1.5rem;flex-wrap:wrap">
+    <div class="card" style="flex:1;min-width:300px;max-width:420px">
+        <h2>Nueva cuenta</h2>
+        <form method="post">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            {% for campo in form %}
+                <p>
+                    {{ campo.label_tag }}<br>
+                    {{ campo }}
+                    {% if campo.help_text %}<br><small style="color:#777">{{ campo.help_text }}</small>{% endif %}
+                    {% for e in campo.errors %}<br><span class="b-rojo badge">{{ e }}</span>{% endfor %}
+                </p>
+            {% endfor %}
+            <button class="btn" type="submit">Crear vendedor</button>
+        </form>
+    </div>
+
+    <div style="flex:1;min-width:300px">
+        <h2>Vendedores actuales</h2>
+        {% if vendedores %}
+            <table>
+                <tr><th>Usuario</th><th>Nombre</th><th>Cargo</th><th>Horario</th><th>Teléfono</th></tr>
+                {% for vendedor in vendedores %}
+                    <tr>
+                        <td>{{ vendedor.usuario_auth.username }}</td>
+                        <td>{{ vendedor.usuario_auth.first_name }}</td>
+                        <td>{{ vendedor.cargo }}</td>
+                        <td>{{ vendedor.horario }}</td>
+                        <td>{{ vendedor.telefono }}</td>
+                    </tr>
+                {% endfor %}
+            </table>
+        {% else %}
+            <p class="vacio">Aún no hay vendedores.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

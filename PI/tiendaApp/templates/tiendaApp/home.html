@@ -1,28 +1,36 @@
 {% extends "base.html" %}
-{% block title %}Inicio — PetShop{% endblock %}
+{% block title %}PetShop — Tienda de mascotas{% endblock %}
 {% block contenido %}
-    <h1>Bienvenido a la PetShop 🐾</h1>
-    <p>Alimentos, higiene y accesorios para tu mascota.</p>
+<h1>🐾 Bienvenido a PetShop</h1>
+<p>Alimento, higiene y accesorios para tu mascota. Despacho a domicilio o
+   retiro en tienda. Pago online con WebPay.</p>
 
-    <h2>Destacados</h2>
+<div class="acciones">
+    <a class="btn" href="{% url 'tiendaApp:lista_productos' %}">Ver catálogo</a>
+    {% if not user.is_authenticated %}
+        <a class="btn azul" href="{% url 'tiendaApp:registro' %}">Crear cuenta de cliente</a>
+    {% elif user.cliente_perfil %}
+        <a class="btn azul" href="{% url 'tiendaApp:crear_ficha' %}">Registrar ficha de mi mascota</a>
+    {% elif user.vendedor_perfil %}
+        <a class="btn azul" href="{% url 'tiendaApp:panel_vendedor' %}">Ir al panel del vendedor</a>
+    {% endif %}
+</div>
+
+<h2>Productos destacados</h2>
+{% if destacados %}
     <div class="grid">
-        {% for p in destacados %}
-            <a class="card" href="{% url 'tiendaApp:detalle_producto' p.id %}" style="text-decoration:none">
-                {% if p.imagen %}
-                    <img src="{{ p.imagen.url }}" alt="{{ p.nombre }}"
-                         style="width:100%;height:130px;object-fit:cover;border-radius:8px;margin-bottom:.4rem">
-                {% endif %}
-                <strong>{{ p.nombre }}</strong><br>
-                <small>{{ p.get_tipo_producto_display }} · {{ p.get_animal_display }}</small><br>
-                <span class="precio">${{ p.precio }}</span><br>
-                {% if p.stock and p.stock.stock_total > 0 %}
-                    <span class="etiqueta">Hay stock</span>
-                {% else %}
-                    <span class="etiqueta">Sin stock</span>
-                {% endif %}
-            </a>
-        {% empty %}
-            <p class="vacio">Aún no hay productos cargados. Agrégalos desde el admin.</p>
+        {% for producto in destacados %}
+            <div class="card">
+                <strong>{{ producto.nombre }}</strong><br>
+                <span class="etiqueta">{{ producto.get_animal_display }}</span>
+                <span class="etiqueta">{{ producto.get_tipo_producto_display }}</span><br>
+                <span class="precio">${{ producto.precio }}</span><br>
+                <a href="{% url 'tiendaApp:detalle_producto' producto.pk %}">Ver detalle →</a>
+            </div>
         {% endfor %}
     </div>
+{% else %}
+    <p class="vacio">Aún no hay productos. Crea algunos desde el
+       <a href="/admin/">Django admin</a> (Productos + su Stock).</p>
+{% endif %}
 {% endblock %}

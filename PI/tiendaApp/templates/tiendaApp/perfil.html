@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Mi perfil · PetShop{% endblock %}
+{% block contenido %}
+<h1>Mi perfil</h1>
+
+<div class="card" style="max-width:520px">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        {% for campo in form %}
+            <p>
+                {{ campo.label_tag }}<br>
+                {{ campo }}
+                {% for e in campo.errors %}<br><span class="b-rojo badge">{{ e }}</span>{% endfor %}
+            </p>
+        {% endfor %}
+        <button class="btn" type="submit">Guardar cambios</button>
+    </form>
+</div>
+
+<div class="acciones" style="margin-top:1rem">
+    <a class="btn azul" href="{% url 'tiendaApp:mis_fichas' %}">Mis mascotas</a>
+    <a class="btn azul" href="{% url 'tiendaApp:mis_compras' %}">Mis compras</a>
+</div>
+{% endblock %}

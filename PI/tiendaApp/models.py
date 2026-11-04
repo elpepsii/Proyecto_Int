@@ -164,15 +164,8 @@ class Producto(models.Model):
     sku = models.CharField(max_length=50, unique=True)
     nombre = models.CharField(max_length=100)
     precio = models.PositiveIntegerField()
-    # RF-01: el cliente debe ver la imagen del producto. Igual que el taller
-    # del cine: se sube desde el admin y queda en media/productos/.
-    imagen = models.ImageField('Imagen del producto', upload_to='productos',
-                               blank=True, null=True)
-    # A-02 / RF-13: el administrador ingresa costo y margen; el precio de
-    # venta sugerido se calcula (ver precio_sugerido más abajo).
-    costo = models.PositiveIntegerField(default=0)
-    margen_ganancia = models.PositiveIntegerField(default=30)  # % sobre el costo
     # Un producto puede contener varios ingredientes alérgenos
+    # Un producto puede contener varios ingredientes alérgenos (typo corregido)
     alergenos_contenidos = models.ManyToManyField(
         Alergia, blank=True, related_name='productos_afectados'
     )
@@ -191,15 +184,6 @@ class Producto(models.Model):
 
     def __str__(self):
         return f"{self.nombre} [{self.sku}]"
-
-    @property
-    def precio_sugerido(self):
-        """RF-13: precio de venta sugerido = costo + margen (CLP, sin
-        decimales). Si aún no hay costo cargado, se muestra el precio vigente.
-        Se muestra en el admin para que el administrador decida."""
-        if self.costo:
-            return round(self.costo * (1 + self.margen_ganancia / 100))
-        return self.precio
 
 class Stock(models.Model):
     producto = models.OneToOneField(Producto, on_delete=models.CASCADE, related_name='stock')
@@ -319,6 +303,26 @@ class Venta(models.Model):
             detalle.save()
         self.recalcular_total()
         return detalle
+
+    # NUEVO (RF-18): descuento de inventario al concretarse la venta
+    def descontar_stock(self):
+        """Descuenta del inventario las unidades vendidas en esta venta.
+
+        NO se llama a mano: la invoca Pago.save() EXACTAMENTE cuando un pago
+        pasa a AUTORIZADO (POS o WebPay). Como esa rama solo corre en la
+        transición pendiente->completada, el stock nunca se descuenta dos veces.
+        Descuenta primero de sala y, si no alcanza, completa desde bodega.
+        """
+        for detalle in self.detalles.select_related('producto'):
+            stock = Stock.objects.filter(producto=detalle.producto).first()
+            if stock is None:
+                continue  # producto sin fila de Stock: nada que descontar
+            pendiente = detalle.cantidad
+            de_sala = min(stock.stock_sala, pendiente)
+            stock.stock_sala -= de_sala
+            pendiente -= de_sala
+            stock.stock_bodega = max(0, stock.stock_bodega - pendiente)
+            stock.save(update_fields=['stock_sala', 'stock_bodega'])
 
     def __str__(self):
         return (f"Venta #{self.id} [{self.get_origen_display()}] "
@@ -463,6 +467,9 @@ class Pago(models.Model):
         if (self.estado_pago == EstadoPago.AUTORIZADO
                 and self.venta.estado != EstadoVenta.COMPLETADA):
             self.venta.estado = EstadoVenta.COMPLETADA
+            # NUEVO (RF-18): el stock se descuenta aquí, en el MISMO instante
+            # en que la venta queda completada (sirve para POS y para WebPay).
+            self.venta.descontar_stock()
             self.venta.save(update_fields=['estado', 'fecha_actualizacion'])
         elif (self.estado_pago == EstadoPago.ANULADO
                 and self.venta.estado != EstadoVenta.ANULADA):
@@ -557,3 +564,87 @@ class Informe(models.Model):
             if self.administrador else 'N/A'
         )
         return f"Informe del {self.fecha_informe} (Admin: {admin_name})"
+
+
+#--------------------------------------------
+# 6.- MÓDULO JORNADAS LABORALES (NUEVO: RF-12 / RF-24)
+#--------------------------------------------
+
+class JornadaLaboral(models.Model):
+    """Jornada (turno) de trabajo de un vendedor.
+
+    Se ABRE al empezar el turno y se CIERRA al terminarlo. Al cerrar,
+    resumen_turno() entrega el desglose de las ventas del turno (RF-24:
+    resumen de cierre con el total recaudado por medio de pago).
+    """
+    vendedor = models.ForeignKey(
+        Vendedor, on_delete=models.CASCADE, related_name='jornadas'
+    )
+    inicio = models.DateTimeField(auto_now_add=True)
+    fin = models.DateTimeField(null=True, blank=True)
+    notas_cierre = models.CharField(max_length=200, blank=True)
+
+    class Meta:
+        ordering = ['-inicio']
+        verbose_name = 'Jornada laboral'
+        verbose_name_plural = 'Jornadas laborales'
+
+    @property
+    def activa(self):
+        """True si el vendedor sigue dentro de esta jornada (sin cerrar)."""
+        return self.fin is None
+
+    @property
+    def fin_efectivo(self):
+        """Fin real de la jornada; si sigue abierta, 'ahora' (sirve para
+        ver el resumen en vivo antes de cerrar)."""
+        return self.fin or timezone.now()
+
+    @property
+    def duracion_minutos(self):
+        return int((self.fin_efectivo - self.inicio).total_seconds() // 60)
+
+    def ventas_del_turno(self):
+        """Ventas POS de este vendedor dentro de la jornada."""
+        return (Venta.objects
+                .filter(origen=OrigenVenta.POS,
+                        vendedor=self.vendedor,
+                        fecha_venta__gte=self.inicio,
+                        fecha_venta__lte=self.fin_efectivo)
+                .prefetch_related('pagos', 'detalles__producto'))
+
+    def resumen_turno(self):
+        """RF-24: desglose de las ventas del turno. Devuelve un dict con la
+        cantidad de ventas, el total recaudado y el desglose por medio de
+        pago: [(nombre_medio, monto, n_pagos), ...]."""
+        ventas = self.ventas_del_turno().filter(estado=EstadoVenta.COMPLETADA)
+        pagos = Pago.objects.filter(venta__in=ventas,
+                                    estado_pago=EstadoPago.AUTORIZADO)
+        por_medio = {}
+        for pago in pagos:
+            monto, n = por_medio.get(pago.medio_pago, (0, 0))
+            por_medio[pago.medio_pago] = (monto + pago.monto, n + 1)
+        return {
+            'cantidad': ventas.count(),
+            'total': sum(p.monto for p in pagos),
+            'por_medio': [
+                (MedioPago(medio).label, monto, n)
+                for medio, (monto, n) in sorted(por_medio.items())
+            ],
+        }
+
+    @classmethod
+    def abrir(cls, vendedor):
+        """Abre la jornada del vendedor. Si ya tenía una abierta, devuelve
+        esa misma (nunca hay dos jornadas activas a la vez)."""
+        return (cls.objects.filter(vendedor=vendedor, fin__isnull=True).first()
+                or cls.objects.create(vendedor=vendedor))
+
+    def cerrar(self, notas=''):
+        self.fin = timezone.now()
+        self.notas_cierre = notas or ''
+        self.save(update_fields=['fin', 'notas_cierre'])
+
+    def __str__(self):
+        return (f"Jornada #{self.id} de {self.vendedor.usuario_auth.username} "
+                f"({'activa' if self.activa else 'cerrada'})")

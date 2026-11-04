@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Ventas · PetShop{% endblock %}
+{% block contenido %}
+<h1>Registro de ventas</h1>
+<p>Tus ventas POS y los pedidos web de la tienda (RF-18 / RF-20).</p>
+
+<form method="get" class="filtros">
+    <div class="fila">
+        <div><label>Filtrar por estado</label>
+            <select name="estado">
+                <option value="">Todos</option>
+                {% for valor, nombre in estados %}
+                    <option value="{{ valor }}" {% if valor == estado_actual %}selected{% endif %}>{{ nombre }}</option>
+                {% endfor %}
+            </select></div>
+        <div><button class="btn" type="submit">Filtrar</button></div>
+    </div>
+</form>
+
+{% if ventas %}
+    <table>
+        <tr><th>#</th><th>Fecha</th><th>Origen</th><th>Cliente</th><th>Productos</th><th>Total</th><th>Estado</th><th></th></tr>
+        {% for venta in ventas %}
+            <tr>
+                <td>{{ venta.id }}</td>
+                <td>{{ venta.fecha_venta|date:"d/m/Y H:i" }}</td>
+                <td>{{ venta.get_origen_display }}</td>
+                <td>{{ venta.cliente|default:"Consumidor final" }}</td>
+                <td>
+                    {% for detalle in venta.detalles.all %}
+                        {{ detalle.cantidad }}× {{ detalle.producto.nombre }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </td>
+                <td>${{ venta.total }}</td>
+                <td>
+                    {% if venta.estado == 'completada' %}<span class="badge b-verde">Completada</span>
+                    {% elif venta.estado == 'pendiente' %}<span class="badge b-amarillo">Pendiente</span>
+                    {% else %}<span class="badge b-rojo">{{ venta.get_estado_display }}</span>{% endif %}
+                </td>
+                <td><a class="btn mini gris" href="{% url 'tiendaApp:detalle_venta' venta.pk %}">Ver</a></td>
+            </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p class="vacio">No hay ventas con ese filtro.</p>
+{% endif %}
+{% endblock %}

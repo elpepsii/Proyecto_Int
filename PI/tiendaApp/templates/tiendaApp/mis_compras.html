@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Mis compras · PetShop{% endblock %}
+{% block contenido %}
+<h1>Mis compras</h1>
+
+{% if ventas %}
+    <table>
+        <tr><th>Venta</th><th>Fecha</th><th>Productos</th><th>Total</th><th>Estado</th><th></th></tr>
+        {% for venta in ventas %}
+            <tr>
+                <td>#{{ venta.id }}</td>
+                <td>{{ venta.fecha_venta|date:"d/m/Y H:i" }}</td>
+                <td>
+                    {% for detalle in venta.detalles.all %}
+                        {{ detalle.cantidad }}× {{ detalle.producto.nombre }}{% if not forloop.last %}, {% endif %}
+                    {% endfor %}
+                </td>
+                <td>${{ venta.total }}</td>
+                <td>
+                    {% if venta.estado == 'completada' %}<span class="badge b-verde">Completada</span>
+                    {% elif venta.estado == 'pendiente' %}<span class="badge b-amarillo">Pendiente de pago</span>
+                    {% else %}<span class="badge b-rojo">{{ venta.get_estado_display }}</span>{% endif %}
+                </td>
+                <td>
+                    <a class="btn mini gris" href="{% url 'tiendaApp:detalle_venta' venta.pk %}">Ver</a>
+                    {% if venta.estado == 'pendiente' and not venta.pago_autorizado %}
+                        <a class="btn mini" href="{% url 'webpay:iniciar' venta.pk %}">Pagar ahora</a>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p class="vacio">Aún no tienes compras. <a href="{% url 'tiendaApp:lista_productos' %}">Explora el catálogo →</a></p>
+{% endif %}
+{% endblock %}

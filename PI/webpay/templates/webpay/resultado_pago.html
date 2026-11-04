@@ -1,69 +1,75 @@
-<!DOCTYPE html>
-{# ------------------------------------------------------------------ #}
-{#  Resultado final del intento de pago (éxito, rechazo o cancelación #}
-{#  y también los errores de guardas de iniciar_pago_webpay).         #}
-{#  Autocontenida por defecto; puedes cambiarla por un                #}
-{#  {% extends "base.html" %} cuando la integres a tu diseño.         #}
-{# ------------------------------------------------------------------ #}
-<html lang="es">
-<head>
-    <meta charset="utf-8">
-    <title>{{ titulo|default:"Resultado del pago" }}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body   { font-family: system-ui, sans-serif; background: #f4f6f8;
-                 display: flex; align-items: center; justify-content: center;
-                 min-height: 100vh; margin: 0; }
-        .caja  { background: #fff; padding: 2rem 2.5rem; border-radius: 12px;
-                 box-shadow: 0 4px 16px rgba(0,0,0,.08); max-width: 480px;
-                 text-align: center; }
-        .ok    { color: #198754; } .malo { color: #dc3545; }
-        table  { margin: 1rem auto; border-collapse: collapse; text-align: left; }
-        td     { padding: .3rem .8rem; border-bottom: 1px solid #eee; }
-        td:first-child { color: #6c757d; }
-        a.boton, button { display: inline-block; margin: .4rem; padding: .6rem 1.4rem;
-                 border-radius: 8px; text-decoration: none; font-size: 1rem;
-                 border: 0; cursor: pointer; }
-        .primario { background: #0d6efd; color: #fff; }
-        .secundario { background: #e9ecef; color: #212529; }
-    </style>
-</head>
-<body>
-    <div class="caja">
+{% extends "base.html" %}
+{% block title %}Resultado del pago · PetShop{% endblock %}
+{% block contenido %}
+<h1>Resultado del pago</h1>
 
-        {% if autorizado %}
-            <h1 class="ok">✅ ¡Pago aprobado!</h1>
-            <p>Tu pago fue autorizado por Transbank y la venta quedó
-               <strong>completada</strong>. Te enviamos el comprobante.</p>
-        {% elif fallido %}
-            <h1 class="malo">❌ Pago no realizado</h1>
-            <p>{{ mensaje|default:"El pago no se completó. La venta sigue pendiente." }}</p>
-        {% else %}
-            <h1>{{ titulo|default:"Atención" }}</h1>
-            <p>{{ mensaje }}</p>
-        {% endif %}
-
-        {% if pago %}
-            <table>
-                <tr><td>Venta</td>      <td>#{{ venta.id }}</td></tr>
-                <tr><td>Monto</td>      <td>${{ pago.monto }}</td></tr>
-                <tr><td>Medio</td>      <td>{{ pago.get_medio_pago_display }}</td></tr>
-                <tr><td>Estado</td>     <td>{{ pago.get_estado_pago_display }}</td></tr>
-                <tr><td>Orden</td>      <td>{{ pago.buy_order|default:"—" }}</td></tr>
-                {% if pago.codigo_autorizacion %}
-                <tr><td>Código auth.</td><td>{{ pago.codigo_autorizacion }}</td></tr>
-                {% endif %}
-                {% if pago.card_last4 %}
-                <tr><td>Tarjeta</td>    <td>•••• {{ pago.card_last4 }}</td></tr>
-                {% endif %}
-            </table>
-        {% endif %}
-
-        {% if fallido and venta %}
-            <a class="boton primario" href="{% url 'webpay:iniciar' venta.id %}">Intentar de nuevo</a>
-        {% endif %}
-        <a class="boton secundario" href="javascript:history.back()">Volver</a>
-
+{% if autorizado %}
+    <div class="resumen" style="border-left:8px solid #2f6b3f">
+        <h2>✅ Pago autorizado</h2>
+        <p>¡Gracias por tu compra! Tu pago fue aprobado por Transbank.</p>
     </div>
-</body>
-</html>
+{% elif fallido %}
+    <div class="resumen" style="border-left:8px solid #a33">
+        <h2>❌ Pago no completado</h2>
+        <p>{% if mensaje %}{{ mensaje }}{% else %}El pago no se pudo completar. Tu pedido
+           queda PENDIENTE: puedes reintentarlo cuando quieras.{% endif %}</p>
+    </div>
+{% elif titulo %}
+    <div class="resumen" style="border-left:8px solid #777">
+        <h2>{{ titulo }}</h2>
+        <p>{{ mensaje }}</p>
+    </div>
+{% else %}
+    <div class="resumen" style="border-left:8px solid #2f6b3f">
+        <h2>✅ Pago autorizado</h2>
+        <p>¡Gracias por tu compra!</p>
+    </div>
+{% endif %}
+
+{% if pago %}
+    <h2>Detalle del pago</h2>
+    <table style="max-width:640px">
+        <tr><th>Orden de compra</th><td><small>{{ pago.buy_order }}</small></td></tr>
+        <tr><th>Medio de pago</th><td>{{ pago.get_medio_pago_display }}</td></tr>
+        <tr><th>Monto</th><td><strong>${{ pago.monto }}</strong></td></tr>
+        <tr><th>Estado</th><td>{{ pago.get_estado_pago_display }}</td></tr>
+        {% if pago.codigo_autorizacion %}
+            <tr><th>Código de autorización</th><td>{{ pago.codigo_autorizacion }}</td></tr>
+        {% endif %}
+        {% if pago.card_last4 %}
+            <tr><th>Tarjeta</th><td>**** **** **** {{ pago.card_last4 }}</td></tr>
+        {% endif %}
+        {% if pago.tipo_pago %}
+            <tr><th>Tipo de pago</th><td>{{ pago.tipo_pago }}{% if pago.cuotas %} · {{ pago.cuotas }} cuota(s){% endif %}</td></tr>
+        {% endif %}
+        {% if pago.fecha_transaccion %}
+            <tr><th>Fecha (Transbank)</th><td>{{ pago.fecha_transaccion|date:"d/m/Y H:i" }}</td></tr>
+        {% endif %}
+    </table>
+{% endif %}
+
+{% if venta %}
+    <h2>Tu pedido</h2>
+    <p><strong>Venta #{{ venta.id }}</strong> — estado:
+        {% if venta.estado == 'completada' %}<span class="badge b-verde">Completada</span>
+        {% elif venta.estado == 'pendiente' %}<span class="badge b-amarillo">Pendiente de pago</span>
+        {% else %}<span class="badge b-rojo">{{ venta.get_estado_display }}</span>{% endif %}
+        — total <strong>${{ venta.total }}</strong></p>
+    <table style="max-width:640px">
+        <tr><th>Producto</th><th>Cant.</th><th>Subtotal</th></tr>
+        {% for detalle in venta.detalles.all %}
+            <tr><td>{{ detalle.producto.nombre }}</td><td>{{ detalle.cantidad }}</td><td>${{ detalle.subtotal }}</td></tr>
+        {% endfor %}
+    </table>
+{% endif %}
+
+<div class="acciones" style="margin-top:1rem">
+    {% if venta %}
+        <a class="btn azul" href="{% url 'tiendaApp:detalle_venta' venta.pk %}">Ver detalle del pedido</a>
+    {% endif %}
+    {% if user.cliente_perfil %}
+        <a class="btn" href="{% url 'tiendaApp:mis_compras' %}">Mis compras</a>
+    {% endif %}
+    <a class="btn gris" href="{% url 'tiendaApp:home' %}">Volver al inicio</a>
+</div>
+{% endblock %}

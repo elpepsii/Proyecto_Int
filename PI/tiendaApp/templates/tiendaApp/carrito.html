@@ -1,71 +1,51 @@
 {% extends "base.html" %}
-{% block title %}Carrito — PetShop{% endblock %}
+{% block title %}Carrito · PetShop{% endblock %}
 {% block contenido %}
-    <h1>🛒 Tu carrito</h1>
+<h1>🛒 Tu carrito</h1>
 
-    {% if lineas %}
-        <table>
+{% if lineas %}
+    <table>
+        <tr><th>Producto</th><th>Precio</th><th>Cantidad</th><th>Subtotal</th><th></th></tr>
+        {% for linea in lineas %}
             <tr>
-                <th>Producto</th>
-                <th>Precio</th>
-                <th>Cantidad</th>
-                <th>Subtotal</th>
-                <th></th>
+                <td><a href="{% url 'tiendaApp:detalle_producto' linea.producto.pk %}">{{ linea.producto.nombre }}</a></td>
+                <td>${{ linea.producto.precio }}</td>
+                <td>
+                    <form method="post" action="{% url 'tiendaApp:actualizar_linea' linea.producto.pk %}" style="display:flex;gap:.3rem">
+                        {% csrf_token %}
+                        <input type="number" name="cantidad" value="{{ linea.cantidad }}" min="1" style="width:65px">
+                        <button class="btn mini gris" type="submit">Actualizar</button>
+                    </form>
+                </td>
+                <td>${{ linea.subtotal }}</td>
+                <td>
+                    <form method="post" action="{% url 'tiendaApp:quitar_linea' linea.producto.pk %}">
+                        {% csrf_token %}
+                        <button class="btn mini rojo" type="submit">Quitar</button>
+                    </form>
+                </td>
             </tr>
-            {% for linea in lineas %}
-                <tr>
-                    <td>
-                        <a href="{% url 'tiendaApp:detalle_producto' linea.producto.id %}">
-                            {{ linea.producto.nombre }}</a>
-                        <small>[{{ linea.producto.sku }}]</small>
-                    </td>
-                    <td>${{ linea.producto.precio }}</td>
-                    <td>
-                        {# Cambia la cantidad y presiona Actualizar. Es POST #}
-                        {# porque modifica el carrito (nunca un GET).        #}
-                        <form method="post" class="inline"
-                              action="{% url 'tiendaApp:actualizar_linea' linea.producto.id %}">
-                            {% csrf_token %}
-                            <input type="number" name="cantidad" min="1"
-                                   value="{{ linea.cantidad }}" style="width:4.5rem">
-                            <button type="submit">Actualizar</button>
-                        </form>
-                    </td>
-                    <td class="precio">${{ linea.subtotal }}</td>
-                    <td>
-                        <form method="post" class="inline"
-                              action="{% url 'tiendaApp:quitar_linea' linea.producto.id %}">
-                            {% csrf_token %}
-                            <button type="submit" class="boton peligro">Quitar</button>
-                        </form>
-                    </td>
-                </tr>
-            {% endfor %}
-            <tr>
-                <td colspan="3"><strong>Neto</strong></td>
-                <td colspan="2">${{ neto }}</td>
-            </tr>
-            <tr>
-                <td colspan="3"><strong>IVA (19%, ya incluido en el precio)</strong></td>
-                <td colspan="2">${{ iva }}</td>
-            </tr>
-            <tr>
-                <td colspan="3"><strong>TOTAL</strong></td>
-                <td colspan="2" class="precio" style="font-size:1.2rem">${{ total }}</td>
-            </tr>
-        </table>
+        {% endfor %}
+    </table>
 
-        <p style="margin-top:1rem">
-            {# El checkout exige sesión: si no estás logueado, Django te manda #}
-            {# al login con ?next= y después te devuelve acá automáticamente.  #}
-            <form method="post" action="{% url 'tiendaApp:checkout' %}" class="inline">
+    <div class="resumen" style="margin-top:1rem">
+        <p><strong>Resumen (los precios incluyen IVA 19%)</strong></p>
+        <p>Neto: ${{ neto }}<br>
+           IVA (19%): ${{ iva }}<br>
+           <strong style="font-size:1.15rem">Total: ${{ total }}</strong></p>
+        <div class="acciones">
+            {% if user.is_authenticated and user.cliente_perfil %}
+                <a class="btn" href="{% url 'tiendaApp:checkout' %}">Continuar al pago →</a>
+            {% else %}
+                <a class="btn" href="{% url 'login' %}">Inicia sesión para pagar</a>
+            {% endif %}
+            <form method="post" action="{% url 'tiendaApp:vaciar_carrito' %}">
                 {% csrf_token %}
-                <button type="submit">💳 Pagar con WebPay</button>
+                <button class="btn rojo" type="submit">Vaciar carrito</button>
             </form>
-            <a class="boton secundario" href="{% url 'tiendaApp:lista_productos' %}">Seguir comprando</a>
-        </p>
-    {% else %}
-        <p class="vacio">Tu carrito está vacío.</p>
-        <a class="boton" href="{% url 'tiendaApp:lista_productos' %}">Ver el catálogo</a>
-    {% endif %}
+        </div>
+    </div>
+{% else %}
+    <p class="vacio">Tu carrito está vacío. <a href="{% url 'tiendaApp:lista_productos' %}">Ir al catálogo →</a></p>
+{% endif %}
 {% endblock %}

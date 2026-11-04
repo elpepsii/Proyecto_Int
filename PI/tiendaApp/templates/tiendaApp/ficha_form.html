@@ -1,19 +1,24 @@
 {% extends "base.html" %}
-{% block title %}{% if ficha %}Editar{% else %}Nueva{% endif %} mascota — PetShop{% endblock %}
+{% block title %}{% if ficha %}Editar ficha{% else %}Nueva ficha{% endif %} · PetShop{% endblock %}
 {% block contenido %}
-    <h1>{% if ficha %}Editar a {{ ficha.nombre }}{% else %}Nueva ficha de mascota{% endif %}</h1>
+<h1>{% if ficha %}Editar ficha de {{ ficha.nombre }}{% else %}Nueva ficha de mascota{% endif %}</h1>
 
-    {# {{ form.as_p }} renderiza cada campo como <p>. favoritos y alergias #}
-    {# aparecen como CASILLAS por el widget CheckboxSelectMultiple.       #}
-    <form method="post" style="max-width:560px">
+<div class="card" style="max-width:600px">
+    <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Guardar</button>
-        <a href="{% url 'tiendaApp:mis_fichas' %}">Cancelar</a>
+        {{ form.non_field_errors }}
+        {% for campo in form %}
+            <p>
+                {{ campo.label_tag }}<br>
+                {{ campo }}
+                {% if campo.help_text %}<br><small style="color:#777">{{ campo.help_text }}</small>{% endif %}
+                {% for e in campo.errors %}<br><span class="b-rojo badge">{{ e }}</span>{% endfor %}
+            </p>
+        {% endfor %}
+        <div class="acciones">
+            <button class="btn" type="submit">Guardar ficha</button>
+            <a class="btn gris" href="{% url 'tiendaApp:mis_fichas' %}">Cancelar</a>
+        </div>
     </form>
-
-    {# Muestra los errores de validación que el modelo rechazó (si hay) #}
-    {% if form.errors %}
-        <p class="vacio">Revisa los campos marcados: {{ form.errors }}</p>
-    {% endif %}
+</div>
 {% endblock %}

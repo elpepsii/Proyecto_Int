@@ -1,3 +1,5 @@
+from django.shortcuts import render
+# Create your views here.
 """
 views.py — Flujo WebPay Plus en 3 pasos (SANDBOX).
 
@@ -91,7 +93,9 @@ def iniciar_pago_webpay(request, venta_id):
     try:
         token_ws, url_webpay = gateway.crear_transaccion(
             buy_order, session_id, venta.total, return_url)
-    except TransbankError as e:
+    except (TransbankError, ValueError) as e:
+        # ValueError cubre respuestas no-JSON (p. ej. sin conexión a
+        # webpay3gint.transbank.cl): la demo muestra un error limpio, no un 500.
         logger.error('WebPay create falló para venta %s: %s', venta.pk, e)
         pago.estado_pago = EstadoPago.FALLIDO
         pago.save()
@@ -152,7 +156,7 @@ def retorno_webpay(request):
 
     try:
         r = gateway.confirmar_transaccion(token_ws)
-    except TransbankError as e:
+    except (TransbankError, ValueError) as e:
         logger.error('WebPay commit falló (pago %s): %s', pago.pk, e)
         pago.estado_pago = EstadoPago.FALLIDO
         pago.save()

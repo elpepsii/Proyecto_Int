@@ -1,17 +1,25 @@
 {% extends "base.html" %}
-{% block title %}Iniciar sesión — PetShop{% endblock %}
+{% block title %}Iniciar sesión · PetShop{% endblock %}
 {% block contenido %}
-    <h1>Iniciar sesión</h1>
+<h1>Iniciar sesión</h1>
+<p>Clientes, vendedores y administradores entran por el mismo acceso:
+   el sistema detecta tu rol automáticamente.</p>
 
-    {# Esta plantilla la usa la vista de login que Django trae incluida #}
-    {# (django.contrib.auth.urls -> /cuenta/login/). Solo tuvimos que       #}
-    {# crearla porque Django no trae el HTML.                              #}
-    <form method="post" style="max-width:420px">
+<div class="card" style="max-width:420px">
+    {% if form.errors %}
+        <p class="mensajes"><span class="error" style="display:block;padding:.5rem;border-radius:8px">
+            Usuario o contraseña incorrectos. Inténtalo de nuevo.</span></p>
+    {% endif %}
+
+    <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Entrar</button>
+        <p><label>Usuario</label><br>{{ form.username }}</p>
+        <p><label>Contraseña</label><br>{{ form.password }}</p>
+        <input type="hidden" name="next" value="{{ next }}">
+        <button class="btn" type="submit">Entrar</button>
     </form>
+</div>
 
-    <p>¿Todavía no tienes cuenta?
-       <a href="{% url 'tiendaApp:registro' %}">Regístrate aquí</a></p>
+<p style="margin-top:1rem">¿Aún no tienes cuenta? <a href="{% url 'tiendaApp:registro' %}">Regístrate como cliente</a>
+   (los vendedores los crea el administrador).</p>
 {% endblock %}

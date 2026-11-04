@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Venta POS · PetShop{% endblock %}
+{% block contenido %}
+<h1>🧾 Registro de venta presencial (POS)</h1>
+<p>Marca la cantidad de cada producto (RF-18). Al registrar: se crea la
+   Venta, el Pago queda AUTORIZADO, la venta pasa a COMPLETADA y el stock
+   se descuenta automáticamente (regla central en <code>Pago.save()</code>).</p>
+
+<form method="post">
+    {% csrf_token %}
+
+    <h2>1. Productos</h2>
+    <table>
+        <tr><th>Producto</th><th>Precio</th><th>Stock (sala/bodega)</th><th>Cantidad a vender</th></tr>
+        {% for producto in productos %}
+            <tr>
+                <td>{{ producto.nombre }} <small>[{{ producto.sku }}]</small></td>
+                <td>${{ producto.precio }}</td>
+                <td>
+                    {% if producto.stock %}
+                        {{ producto.stock.stock_sala }} / {{ producto.stock.stock_bodega }}
+                        {% if producto.stock.stock_total == 0 %}<span class="badge b-rojo">sin stock</span>{% endif %}
+                    {% else %}
+                        <span class="vacio">sin registro</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <input type="number" name="cant_{{ producto.pk }}" value="0" min="0"
+                           {% if producto.stock %}max="{{ producto.stock.stock_total }}"{% else %}max="0"{% endif %}
+                           style="width:70px">
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+
+    <h2 style="margin-top:1rem">2. Cobro</h2>
+    <div class="card" style="max-width:520px">
+        {% for campo in form %}
+            <p>
+                {{ campo.label_tag }}<br>
+                {{ campo }}
+                {% for e in campo.errors %}<br><span class="b-rojo badge">{{ e }}</span>{% endfor %}
+            </p>
+        {% endfor %}
+        <button class="btn" type="submit">Registrar venta y cobrar</button>
+    </div>
+</form>
+{% endblock %}

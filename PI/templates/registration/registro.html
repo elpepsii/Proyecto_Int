@@ -1,19 +1,26 @@
 {% extends "base.html" %}
-{% block title %}Crear cuenta — PetShop{% endblock %}
+{% block title %}Crear cuenta · PetShop{% endblock %}
 {% block contenido %}
-    <h1>Crear cuenta</h1>
-    <p>Con tu cuenta podrás registrar las fichas de tus mascotas y comprar
-       más rápido.</p>
+<h1>Crear cuenta de cliente</h1>
+<p>El registro es <strong>solo para clientes</strong> (RF-07): te sirve para
+   guardar tus fichas de mascota, agilizar compras y seguir tus pedidos.
+   Las cuentas de vendedor las crea el administrador.</p>
 
-    <form method="post" style="max-width:480px">
+<div class="card" style="max-width:520px">
+    <form method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Registrarme</button>
+        {{ form.non_field_errors }}
+        {% for campo in form %}
+            <p>
+                {{ campo.label_tag }}<br>
+                {{ campo }}
+                {% if campo.help_text %}<br><small style="color:#777">{{ campo.help_text }}</small>{% endif %}
+                {% for e in campo.errors %}<br><span class="b-rojo badge">{{ e }}</span>{% endfor %}
+            </p>
+        {% endfor %}
+        <button class="btn" type="submit">Crear cuenta</button>
     </form>
+</div>
 
-    {% if form.errors %}
-        <p class="vacio">Revisa los campos marcados.</p>
-    {% endif %}
-
-    <p>¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión</a></p>
+<p style="margin-top:1rem">¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión</a>.</p>
 {% endblock %}

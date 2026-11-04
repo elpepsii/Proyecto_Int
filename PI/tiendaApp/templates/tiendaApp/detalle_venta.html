@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Venta #{{ venta.id }} · PetShop{% endblock %}
+{% block contenido %}
+<p><a href="javascript:history.back()">← Volver</a></p>
+<h1>Venta #{{ venta.id }}</h1>
+
+<p>
+    <span class="etiqueta">{{ venta.get_origen_display }}</span>
+    {% if venta.estado == 'completada' %}<span class="badge b-verde">Completada</span>
+    {% elif venta.estado == 'pendiente' %}<span class="badge b-amarillo">Pendiente de pago</span>
+    {% elif venta.estado == 'anulada' %}<span class="badge b-rojo">Anulada</span>
+    {% else %}<span class="badge b-gris">{{ venta.get_estado_display }}</span>{% endif %}
+    <span class="etiqueta">{{ venta.fecha_venta|date:"d/m/Y H:i" }}</span>
+    {% if venta.vendedor %}<span class="etiqueta">Vendedor: {{ venta.vendedor }}</span>{% endif %}
+    {% if venta.cliente %}<span class="etiqueta">Cliente: {{ venta.cliente }}</span>{% endif %}
+</p>
+
+<h2>Detalle</h2>
+<table>
+    <tr><th>Producto</th><th>Precio unitario</th><th>Cantidad</th><th>Subtotal</th></tr>
+    {% for detalle in venta.detalles.all %}
+        <tr>
+            <td>{{ detalle.producto.nombre }} <small>[{{ detalle.producto.sku }}]</small></td>
+            <td>${{ detalle.precio_unitario }}</td>
+            <td>{{ detalle.cantidad }}</td>
+            <td>${{ detalle.subtotal }}</td>
+        </tr>
+    {% endfor %}
+</table>
+
+<div class="resumen" style="margin-top:.8rem">
+    <p>Neto: ${{ venta.monto_neto }} · IVA (19%): ${{ venta.monto_iva }}<br>
+       <strong style="font-size:1.1rem">Total: ${{ venta.total }}</strong></p>
+    {% if venta.tipo_documento == 'factura' %}
+        <p><small>Factura · RUT {{ venta.rut_factura }} · {{ venta.razon_social }}</small></p>
+    {% else %}
+        <p><small>Boleta</small></p>
+    {% endif %}
+</div>
+
+<h2>Pagos</h2>
+{% if venta.pagos.all %}
+    <table>
+        <tr><th>Medio</th><th>Monto</th><th>Estado</th><th>Orden de compra</th><th>Fecha</th></tr>
+        {% for pago in venta.pagos.all %}
+            <tr>
+                <td>{{ pago.get_medio_pago_display }}</td>
+                <td>${{ pago.monto }}</td>
+                <td>
+                    {% if pago.estado_pago == 'autorizado' %}<span class="badge b-verde">Autorizado</span>
+                    {% elif pago.estado_pago == 'pendiente' %}<span class="badge b-amarillo">Pendiente</span>
+                    {% else %}<span class="badge b-rojo">{{ pago.get_estado_pago_display }}</span>{% endif %}
+                </td>
+                <td><small>{{ pago.buy_order|default:"—" }}</small></td>
+                <td><small>{{ pago.fecha_creacion|date:"d/m/Y H:i" }}</small></td>
+            </tr>
+        {% endfor %}
+    </table>
+{% else %}
+    <p class="vacio">Sin intentos de pago registrados.</p>
+{% endif %}
+
+{% if venta.entrega %}
+    <h2>Entrega</h2>
+    <p>
+        <span class="etiqueta">{{ venta.entrega.get_tipo_display }}</span>
+        {% if venta.entrega.estado == 'entregado' %}<span class="badge b-verde">Entregado</span>
+        {% else %}<span class="badge b-azul">{{ venta.entrega.get_estado_display }}</span>{% endif %}
+        — {{ venta.entrega.direccion_entrega }}
+        {% if venta.entrega.fecha_entrega %}(entregado el {{ venta.entrega.fecha_entrega|date:"d/m/Y H:i" }}){% endif %}
+    </p>
+{% endif %}
+
+{% if puede_pagar %}
+    <div class="acciones">
+        <a class="btn" href="{% url 'webpay:iniciar' venta.pk %}">💳 Pagar ahora con WebPay</a>
+    </div>
+{% endif %}
+{% endblock %}

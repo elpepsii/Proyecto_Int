@@ -1,29 +1,38 @@
 {% extends "base.html" %}
-{% block title %}Mis mascotas — PetShop{% endblock %}
+{% block title %}Mis mascotas · PetShop{% endblock %}
 {% block contenido %}
-    <h1>Mis mascotas</h1>
-    <p><a class="card" style="display:inline-block" href="{% url 'tiendaApp:crear_ficha' %}">➕ Agregar mascota</a></p>
+<h1>🐾 Fichas de mis mascotas</h1>
+<p>Las fichas personalizan tus filtros del catálogo: especie, alergias y
+   tamaño de grano preferido (RF-08). Máximo 20 por cuenta (RNF-15).</p>
 
-    <div class="grid">
-        {% for f in fichas %}
+<a class="btn" href="{% url 'tiendaApp:crear_ficha' %}">+ Nueva ficha</a>
+
+{% if fichas %}
+    <div class="grid" style="margin-top:1rem">
+        {% for ficha in fichas %}
             <div class="card">
-                <strong>{{ f.nombre }}</strong> · {{ f.get_especie_display }}<br>
-                <small>{{ f.edad }} año{{ f.edad|pluralize }}</small>
-                {% if f.alergias.all %}
-                    <br>⚠️ Alergias:
-                    {% for a in f.alergias.all %}<span class="etiqueta">{{ a.nombre }}</span>{% endfor %}
+                <strong>{{ ficha.nombre }}</strong> — {{ ficha.get_especie_display }}, {{ ficha.edad }} año(s)<br>
+                {% if ficha.alergias.all %}
+                    Alérgico/a a:
+                    {% for alergia in ficha.alergias.all %}<span class="etiqueta">{{ alergia.nombre }}</span>{% endfor %}
+                {% else %}
+                    Sin alergias registradas.
                 {% endif %}
-                {% if f.favoritos.all %}
-                    <br>❤️ Preferencias:
-                    {% for fav in f.favoritos.all %}<span class="etiqueta">{{ fav.nombre }}</span>{% endfor %}
+                <br>
+                {% if ficha.favoritos.all %}
+                    Prefiere:
+                    {% for pref in ficha.favoritos.all %}<span class="etiqueta">{{ pref.nombre }}</span>{% endfor %}
                 {% endif %}
-                {% if f.tamano_grano_preferido %}
-                    <br><small>Grano preferido: {{ f.get_tamano_grano_preferido_display }}</small>
+                {% if ficha.tamano_grano_preferido %}
+                    <br>Grano: {{ ficha.get_tamano_grano_preferido_display }}
                 {% endif %}
-                <br><a href="{% url 'tiendaApp:editar_ficha' f.id %}">Editar</a>
+                <br>
+                <a class="btn mini gris" href="{% url 'tiendaApp:editar_ficha' ficha.pk %}">Editar</a>
+                <a class="btn mini" href="{% url 'tiendaApp:lista_productos' %}?ficha={{ ficha.pk }}">Ver productos compatibles</a>
             </div>
-        {% empty %}
-            <p class="vacio">Todavía no registras mascotas. ¡Agrega la primera!</p>
         {% endfor %}
     </div>
+{% else %}
+    <p class="vacio">Aún no tienes fichas. ¡Crea la primera!</p>
+{% endif %}
 {% endblock %}

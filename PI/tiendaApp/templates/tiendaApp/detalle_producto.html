@@ -1,69 +1,53 @@
 {% extends "base.html" %}
-{% block title %}{{ producto.nombre }} — PetShop{% endblock %}
+{% block title %}{{ producto.nombre }} · PetShop{% endblock %}
 {% block contenido %}
-    {% if producto.imagen %}
-        <img src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}"
-             style="max-width:360px;width:100%;border-radius:10px;display:block;margin-bottom:1rem">
-    {% endif %}
-    <h1>{{ producto.nombre }}</h1>
-    <p><small>[{{ producto.sku }}]</small> · <span class="precio">${{ producto.precio }}</span></p>
+<p><a href="{% url 'tiendaApp:lista_productos' %}">← Volver al catálogo</a></p>
 
+<div class="card">
+    <h1>{{ producto.nombre }}</h1>
     <p>
-        <span class="etiqueta">{{ producto.get_tipo_producto_display }}</span>
         <span class="etiqueta">{{ producto.get_animal_display }}</span>
+        <span class="etiqueta">{{ producto.get_tipo_producto_display }}</span>
         <span class="etiqueta">{{ producto.get_edad_producto_display }}</span>
         <span class="etiqueta">{{ producto.get_tamano_raza_display }}</span>
-        {% if producto.tamano_grano %}
-            <span class="etiqueta">Grano {{ producto.get_tamano_grano_display }}</span>
-        {% endif %}
+        {% if producto.tamano_grano %}<span class="etiqueta">{{ producto.get_tamano_grano_display }}</span>{% endif %}
     </p>
 
-    {# ---------- Agregar al carrito (RF-05) ---------- #}
-    {% if stock and stock.stock_total > 0 %}
-        <form method="post" action="{% url 'tiendaApp:agregar_carrito' producto.id %}">
-            {% csrf_token %}
-            <label>Cantidad:
-                <input type="number" name="cantidad" value="1" min="1"
-                       max="{{ stock.stock_total }}" style="width:4.5rem">
-            </label>
-            <button type="submit">🛒 Agregar al carrito</button>
-        </form>
-    {% else %}
-        <p class="vacio">Sin stock disponible por ahora.</p>
-    {% endif %}
+    <p class="precio" style="font-size:1.4rem">${{ producto.precio }}
+        <small style="color:#777">(IVA incluido)</small></p>
 
-    {% if producto.descripcion %}
-        <p>{{ producto.descripcion|linebreaksbr }}</p>
-    {% endif %}
-
-    <h3>Stock</h3>
-    {% if stock %}
-        <p>Sala: {{ stock.stock_sala }} · Bodega: {{ stock.stock_bodega }} ·
-           Total: <strong>{{ stock.stock_total }}</strong></p>
-        {% if stock.stock_total <= stock.stock_minimo %}
-            <p class="vacio">⚠️ Stock bajo mínimo ({{ stock.stock_minimo }}): reposición sugerida.</p>
-        {% endif %}
-    {% else %}
-        <p class="vacio">Sin registro de stock para este producto.</p>
-    {% endif %}
+    {% if producto.descripcion %}<p>{{ producto.descripcion }}</p>{% endif %}
 
     {% if producto.alergenos_contenidos.all %}
-        <h3>⚠️ Contiene alérgenos</h3>
-        <p>
-            {% for a in producto.alergenos_contenidos.all %}
-                <span class="etiqueta">{{ a.nombre }}</span>
+        <p><strong>⚠️ Contiene alérgenos:</strong>
+            {% for alergia in producto.alergenos_contenidos.all %}
+                <span class="etiqueta">{{ alergia.nombre }}</span>
             {% endfor %}
         </p>
     {% endif %}
 
-    {% if producto.proveedores.all %}
-        <h3>Proveedores</h3>
-        <ul>
-            {% for prov in producto.proveedores.all %}
-                <li>{{ prov.nombre }}</li>
-            {% endfor %}
-        </ul>
+    {% if stock %}
+        <p><strong>Stock:</strong> sala {{ stock.stock_sala }} · bodega {{ stock.stock_bodega }}
+           (total {{ stock.stock_total }})</p>
+    {% else %}
+        <p class="vacio">Sin registro de stock para este producto.</p>
     {% endif %}
 
-    <p><a href="{% url 'tiendaApp:lista_productos' %}">← Volver al catálogo</a></p>
+    {% if producto.proveedores.all %}
+        <p><strong>Proveedores:</strong>
+            {% for proveedor in producto.proveedores.all %}{{ proveedor.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+    {% endif %}
+
+    {% if stock and stock.stock_total > 0 %}
+        <form method="post" action="{% url 'tiendaApp:agregar_carrito' producto.pk %}" class="acciones">
+            {% csrf_token %}
+            <label>Cantidad:
+                <input type="number" name="cantidad" value="1" min="1" max="{{ stock.stock_total }}" style="width:70px">
+            </label>
+            <button class="btn" type="submit">🛒 Agregar al carrito</button>
+        </form>
+    {% else %}
+        <p><span class="b-rojo badge">Sin stock disponible</span></p>
+    {% endif %}
+</div>
 {% endblock %}

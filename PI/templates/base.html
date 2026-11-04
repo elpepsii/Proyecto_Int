@@ -1,11 +1,5 @@
-<!DOCTYPE html>
-{# ------------------------------------------------------------------ #}
-{#  base.html — va en la carpeta TEMPLATES DEL PROYECTO:              #}
-{#  proyecto_petshop/templates/base.html  (no dentro de tiendaApp).   #}
-{#  Configura en settings.py: 'DIRS': [BASE_DIR / 'templates'].       #}
-{#  ACTUALIZADO: nav con Carrito (badge), Mis pedidos y mensajes.     #}
-{# ------------------------------------------------------------------ #}
 {% load static %}
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8">
@@ -13,77 +7,101 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body { font-family: system-ui, sans-serif; margin: 0; background: #f7f7f2; color: #222; }
-        header { background: #2f6b3f; color: #fff; padding: .8rem 1.5rem; }
-        header nav a { color: #fff; margin-right: 1.2rem; text-decoration: none; font-weight: 600; }
-        main { max-width: 1000px; margin: 1.5rem auto; padding: 0 1rem; }
+        header { background: #2f6b3f; color: #fff; padding: .8rem 1.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
+        header .marca { font-weight: 800; font-size: 1.1rem; color: #fff; text-decoration: none; }
+        header nav { display: flex; flex-wrap: wrap; gap: .9rem; align-items: center; }
+        header nav a { color: #fff; text-decoration: none; font-weight: 600; }
+        header nav a:hover { text-decoration: underline; }
+        header .derecha { margin-left: auto; display: flex; gap: .8rem; align-items: center; }
+        main { max-width: 1050px; margin: 1.5rem auto; padding: 0 1rem; }
         footer { text-align: center; color: #777; padding: 1.5rem; font-size: .85rem; }
+        h1 { font-size: 1.5rem; } h2 { font-size: 1.2rem; }
+        a { color: #2f6b3f; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
         .card { background: #fff; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,.07); }
-        a { color: #2f6b3f; }
         .precio { font-weight: 700; color: #1a4426; }
-        .etiqueta { display: inline-block; background: #e8efe9; border-radius: 999px;
-                    padding: .1rem .6rem; margin: .1rem; font-size: .8rem; }
+        .etiqueta { display: inline-block; background: #e8efe9; border-radius: 999px; padding: .1rem .6rem; margin: .1rem; font-size: .8rem; }
         .vacio { color: #999; font-style: italic; }
-
-        /* ---- Mensajes flash de las vistas (agregado, quitado, pagado...) ---- */
-        .aviso { padding: .6rem 1rem; border-radius: 8px; margin-bottom: .8rem; }
-        .aviso.success { background: #e6f4e7; border: 1px solid #b7dfbb; }
-        .aviso.error   { background: #fdecea; border: 1px solid #f5c2c0; }
-        .aviso.warning { background: #fff7e0; border: 1px solid #ffe39b; }
-        .aviso.info    { background: #e8f1fb; border: 1px solid #c3dcf5; }
-
-        /* ---- Botones y tablas (carrito, pedidos) ---- */
-        button, .boton { background: #2f6b3f; color: #fff; border: 0; border-radius: 8px;
-                         padding: .45rem .9rem; cursor: pointer; font-size: .95rem;
-                         text-decoration: none; display: inline-block; }
-        .boton.secundario { background: #e9ecef; color: #222; }
-        .boton.peligro    { background: #b02a37; }
-        table { border-collapse: collapse; width: 100%; background: #fff;
-                border-radius: 10px; overflow: hidden; }
-        th, td { text-align: left; padding: .6rem .8rem; border-bottom: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.07); }
+        th, td { text-align: left; padding: .55rem .7rem; border-bottom: 1px solid #eee; font-size: .95rem; }
         th { background: #eef3ee; }
-        .badge { display: inline-block; background: #ffca3a; color: #4a3800;
-                 border-radius: 999px; padding: 0 .5rem; font-size: .8rem; }
-        form.inline { display: inline; }
+        form p, form li { margin: .4rem 0; }
+        input[type=text], input[type=number], input[type=email], input[type=password], select, textarea {
+            padding: .4rem .5rem; border: 1px solid #bbb; border-radius: 6px; min-width: 120px; }
+        ul#id_alergias, ul#id_favoritos { list-style: none; padding-left: 0; columns: 2; }
+        .btn { display: inline-block; background: #2f6b3f; color: #fff !important; border: 0; border-radius: 8px;
+               padding: .5rem 1rem; font-weight: 700; cursor: pointer; text-decoration: none; font-size: .95rem; }
+        .btn.rojo { background: #a33; } .btn.gris { background: #777; } .btn.azul { background: #2c5f9e; }
+        .btn.mini { padding: .2rem .6rem; font-size: .8rem; }
+        .mensajes { list-style: none; padding: 0; }
+        .mensajes li { padding: .55rem .9rem; border-radius: 8px; margin-bottom: .4rem; font-size: .93rem; }
+        .mensajes .success { background: #e3f3e5; color: #1a4426; }
+        .mensajes .warning { background: #fdf3d7; color: #6b5900; }
+        .mensajes .error   { background: #fde3e3; color: #7a1f1f; }
+        .mensajes .info    { background: #e3eef9; color: #1d3d63; }
+        .badge { display: inline-block; border-radius: 999px; padding: .1rem .6rem; font-size: .8rem; font-weight: 700; }
+        .b-verde  { background: #d9f2dd; color: #1a4426; }
+        .b-amarillo { background: #fdf0c2; color: #6b5900; }
+        .b-rojo   { background: #f8d3d3; color: #7a1f1f; }
+        .b-azul   { background: #d8e8f8; color: #1d3d63; }
+        .b-gris   { background: #e5e5e5; color: #444; }
+        .paginacion { margin: 1rem 0; display: flex; gap: .6rem; justify-content: center; }
+        .resumen { background: #fff; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,.07); max-width: 420px; }
+        .resumen table, .resumen tr:last-child td { border-bottom: 0; }
+        .acciones { display: flex; gap: .5rem; flex-wrap: wrap; margin: .8rem 0; }
+        .filtros { background: #fff; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,.07); margin-bottom: 1rem; }
+        .filtros .fila { display: flex; flex-wrap: wrap; gap: .6rem; align-items: end; }
+        .filtros label { display: block; font-size: .78rem; color: #555; font-weight: 700; }
+        .alerta-stock { background: #fdf0c2; border-radius: 8px; padding: .5rem .8rem; margin: .3rem 0; font-size: .9rem; }
     </style>
 </head>
 <body>
     <header>
-        <nav style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.5rem">
-            <div>
-                <a href="{% url 'tiendaApp:home' %}" style="margin-right:1.2rem">🐾 PetShop</a>
-                <a href="{% url 'tiendaApp:lista_productos' %}" style="margin-right:1.2rem">Catálogo</a>
-                {% if user.is_authenticated %}
-                    <a href="{% url 'tiendaApp:mis_fichas' %}" style="margin-right:1.2rem">Mis mascotas</a>
-                    <a href="{% url 'tiendaApp:mis_pedidos' %}" style="margin-right:1.2rem">Mis pedidos</a>
+        <a class="marca" href="{% url 'tiendaApp:home' %}">🐾 PetShop</a>
+        <nav>
+            <a href="{% url 'tiendaApp:lista_productos' %}">Catálogo</a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'tiendaApp:ver_carrito' %}">🛒 Carrito ({{ cantidad_carrito }})</a>
+                {% if user.cliente_perfil %}
+                    <a href="{% url 'tiendaApp:mis_fichas' %}">Mis mascotas</a>
+                    <a href="{% url 'tiendaApp:mis_compras' %}">Mis compras</a>
+                    <a href="{% url 'tiendaApp:perfil' %}">Mi perfil</a>
                 {% endif %}
-            </div>
-            <div>
-                {# El numerito lo inyecta el context processor carrito_cantidad #}
-                <a href="{% url 'tiendaApp:ver_carrito' %}" style="margin-right:1.2rem">
-                    🛒 Carrito
-                    {% if cantidad_carrito %}<span class="badge">{{ cantidad_carrito }}</span>{% endif %}
-                </a>
-                {% if user.is_authenticated %}
-                    Hola, {{ user.first_name|default:user.username }}
-                    {# logout exige POST en Django moderno: mini-formulario #}
-                    <form method="post" action="{% url 'logout' %}" style="display:inline">
-                        {% csrf_token %}
-                        <button type="submit" style="background:none;border:0;color:#fff;cursor:pointer;text-decoration:underline">Salir</button>
-                    </form>
-                {% else %}
-                    <a href="{% url 'login' %}">Iniciar sesión</a> ·
-                    <a href="{% url 'tiendaApp:registro' %}">Registrarse</a>
+                {% if user.vendedor_perfil %}
+                    <a href="{% url 'tiendaApp:panel_vendedor' %}">Panel vendedor</a>
+                    <a href="{% url 'tiendaApp:pos_venta' %}">Venta POS</a>
+                    <a href="{% url 'tiendaApp:ventas_lista' %}">Ventas</a>
+                    <a href="{% url 'tiendaApp:entregas' %}">Entregas</a>
+                    <a href="{% url 'tiendaApp:jornadas' %}">Jornadas</a>
                 {% endif %}
-            </div>
+                {% if user.is_staff %}
+                    <a href="{% url 'tiendaApp:crear_vendedor' %}">+ Vendedor</a>
+                    <a href="/admin/">Django admin</a>
+                {% endif %}
+            {% endif %}
         </nav>
+        <div class="derecha">
+            {% if user.is_authenticated %}
+                <span>👤 {{ user.get_username }}</span>
+                <form method="post" action="{% url 'logout' %}" style="display:inline">
+                    {% csrf_token %}
+                    <button class="btn mini gris" type="submit">Cerrar sesión</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}">Iniciar sesión</a>
+                <a class="btn mini" href="{% url 'tiendaApp:registro' %}">Crear cuenta</a>
+            {% endif %}
+        </div>
     </header>
 
     <main>
-        {# Mensajes flash: las vistas los agregan con django.contrib.messages #}
-        {% for mensaje in messages %}
-            <div class="aviso {{ mensaje.tags }}">{{ mensaje }}</div>
-        {% endfor %}
+        {% if messages %}
+            <ul class="mensajes">
+                {% for mensaje in messages %}
+                    <li class="{{ mensaje.tags }}">{{ mensaje }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
 
         {% block contenido %}{% endblock %}
     </main>

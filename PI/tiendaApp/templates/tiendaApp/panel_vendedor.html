@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Panel vendedor · PetShop{% endblock %}
+{% block contenido %}
+<h1>Panel del vendedor</h1>
+<p>Hola, {{ user.get_username }} — {{ user.vendedor_perfil.cargo }}.</p>
+
+<div class="acciones">
+    {% if jornada %}
+        <span class="badge b-verde">Jornada activa desde {{ jornada.inicio|date:"H:i" }} ({{ jornada.duracion_minutos }} min)</span>
+        <a class="btn" href="{% url 'tiendaApp:pos_venta' %}">🧾 Nueva venta POS</a>
+        <a class="btn gris" href="{% url 'tiendaApp:jornadas' %}">Cerrar jornada</a>
+    {% else %}
+        <span class="badge b-amarillo">Sin jornada activa</span>
+        <a class="btn" href="{% url 'tiendaApp:jornadas' %}">⏰ Marcar entrada</a>
+    {% endif %}
+    <a class="btn azul" href="{% url 'tiendaApp:ventas_lista' %}">Registro de ventas</a>
+    <a class="btn azul" href="{% url 'tiendaApp:entregas' %}">Entregas pendientes ({{ pedidos_pendientes }})</a>
+</div>
+
+<h2>Resumen de hoy</h2>
+<div class="resumen">
+    <p>Ventas POS completadas: <strong>{{ n_ventas_hoy }}</strong><br>
+       Total recaudado hoy: <strong>${{ monto_hoy }}</strong></p>
+</div>
+
+<h2>Alertas de stock (RF-17)</h2>
+{% if stock_bajo %}
+    {% for stock in stock_bajo %}
+        <div class="alerta-stock">⚠️ <strong>{{ stock.producto.nombre }}</strong>
+            [{{ stock.producto.sku }}]: {{ stock.stock_total }} unidades
+            (mínimo {{ stock.stock_minimo }}) — sala {{ stock.stock_sala }} / bodega {{ stock.stock_bodega }}</div>
+    {% endfor %}
+{% else %}
+    <p class="vacio">Ningún producto bajo el mínimo. Todo en orden. ✅</p>
+{% endif %}
+{% endblock %}

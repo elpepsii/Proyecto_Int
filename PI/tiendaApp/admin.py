@@ -1,9 +1,10 @@
 """
 admin.py — Administración de tiendaApp.
 
-Como en el taller del cine: el admin es la "bodega de datos" del proyecto.
-Desde aquí se cargan productos (con imagen), stock, preferencias,
-proveedores, y se auditan ventas y pagos.
+El admin es la "bodega de datos" del proyecto: aquí el ADMINISTRADOR
+carga productos y stock (RF-09, RF-10), el catálogo de alergias y
+preferencias para las fichas, los vendedores (RF-12) y audita ventas,
+pagos y jornadas.
 
 Extras usados (todos estándar de Django):
   - list_display / list_filter / search_fields: qué mostrar y filtrar.
@@ -16,8 +17,8 @@ Extras usados (todos estándar de Django):
 from django.contrib import admin
 
 from .models import (Alergia, Administrador, Cliente, DetalleVenta, Entrega,
-                     Ficha, Informe, Pago, Preferencia, Producto, Proveedor,
-                     Stock, Vendedor, Venta)
+                     Ficha, Informe, JornadaLaboral, Pago, Preferencia,
+                     Producto, Proveedor, Stock, Vendedor, Venta)
 
 
 # ------------------------------------------------------------------ Inventario
@@ -30,14 +31,12 @@ class StockInline(admin.StackedInline):
 
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
-    list_display = ('sku', 'nombre', 'precio', 'costo', 'margen_ganancia',
-                    'tipo_producto', 'animal', 'activo')
+    list_display = ('sku', 'nombre', 'precio', 'tipo_producto', 'animal',
+                    'activo')
     list_filter = ('activo', 'tipo_producto', 'animal', 'edad_producto')
     search_fields = ('sku', 'nombre')
     filter_horizontal = ('alergenos_contenidos',)
     inlines = [StockInline]
-    # A-02 / RF-13: el admin ve el precio sugerido al editar costo y margen.
-    readonly_fields = ('precio_sugerido',)
 
     # El botón "desactivar" en vez de borrar (baja lógica del modelo).
     actions = ['desactivar_productos']
@@ -49,7 +48,6 @@ class ProductoAdmin(admin.ModelAdmin):
 
 @admin.register(Proveedor)
 class ProveedorAdmin(admin.ModelAdmin):
-    # RNF-23: run_empresa unique en el modelo ya impide duplicados.
     list_display = ('nombre', 'run_empresa', 'correo', 'fono')
     search_fields = ('nombre', 'run_empresa')
     filter_horizontal = ('productos',)
@@ -104,20 +102,19 @@ class AdministradorAdmin(admin.ModelAdmin):
 class DetalleVentaInline(admin.TabularInline):
     model = DetalleVenta
     extra = 0
-    # subtotal lo calcula DetalleVenta.save(); total lo recalcula el método
-    # oficial de Venta. (Sugerencia: crear la venta y usar "agregar_producto"
-    # desde el shell o la vista de POS.)
+    # subtotal lo calcula DetalleVenta.save(); total lo recalcula la venta.
+    # (Sugerencia: registrar las ventas por la vista POS de la tienda.)
 
 
 @admin.register(Venta)
 class VentaAdmin(admin.ModelAdmin):
-    list_display = ('id', 'origen', 'cliente', 'total', 'estado',
+    list_display = ('id', 'origen', 'cliente', 'vendedor', 'total', 'estado',
                     'fecha_venta')
     list_filter = ('estado', 'origen', 'fecha_venta')
     search_fields = ('id', 'cliente__apellido', 'cliente__usuario_auth__username')
     date_hierarchy = 'fecha_venta'
     inlines = [DetalleVentaInline]
-    readonly_fields = ('total',)   # editable=False en el modelo; nadie lo escribe a mano
+    readonly_fields = ('total',)   # editable=False: nadie lo escribe a mano
 
 
 @admin.register(Pago)
@@ -141,6 +138,15 @@ class EntregaAdmin(admin.ModelAdmin):
                     'fecha_entrega')
     list_filter = ('tipo', 'estado')
     search_fields = ('venta__id',)
+
+
+@admin.register(JornadaLaboral)
+class JornadaLaboralAdmin(admin.ModelAdmin):
+    """Jornadas laborales (RF-12 / RF-24): el admin revisa horarios y
+    asistencias de sus vendedores."""
+    list_display = ('id', 'vendedor', 'inicio', 'fin', 'duracion_minutos')
+    list_filter = ('vendedor',)
+    readonly_fields = ('vendedor', 'inicio', 'fin', 'notas_cierre')
 
 
 @admin.register(Informe)
