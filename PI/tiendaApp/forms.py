@@ -7,10 +7,13 @@ longitudes y nulos la hace gratis el modelo.
 """
 
 from django import forms
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import User
 
-from .models import Ficha
+from .models import Cliente, Ficha
 
 
+# ----------------------------------------------------------- Ficha mascota
 class FichaForm(forms.ModelForm):
     class Meta:
         model = Ficha
@@ -19,12 +22,12 @@ class FichaForm(forms.ModelForm):
             'edad',
             'especie',
             'alergias',
-            'favoritos',               # M2M con Preferencia (requiere la corrección del models.py)
+            'favoritos',
             'tamano_grano_preferido',
         ]
         widgets = {
-            # LAS CASILLAS que querías: cada Preferencia del catálogo
-            # (cargada desde el admin) aparece como checkbox.
+            # LAS CASILLAS: cada Preferencia del catálogo (cargada desde el
+            # admin) aparece como checkbox para marcar varias a la vez.
             'favoritos': forms.CheckboxSelectMultiple,
             'alergias': forms.CheckboxSelectMultiple,
         }
@@ -32,3 +35,21 @@ class FichaForm(forms.ModelForm):
             'favoritos': 'Preferencias de alimentación',
             'tamano_grano_preferido': 'Tamaño de grano preferido (opcional)',
         }
+
+
+# ------------------------------------------------- Registro de clientes (RF-07)
+class RegistroForm(UserCreationForm):
+    """Registro de cliente: crea el User de Django y, en la vista, su perfil
+    Cliente asociado. UserCreationForm ya trae username + password1/password2
+    y valida que las contraseñas coincidan y cumplan los validadores del
+    settings (RNF-12: Django las guarda hasheadas, nunca en texto plano)."""
+
+    first_name = forms.CharField(label='Nombre')
+    apellido = forms.CharField(max_length=40)
+    email = forms.EmailField(label='Correo')
+    telefono = forms.CharField(max_length=20, required=False)
+    direccion = forms.CharField(max_length=250, label='Dirección de despacho')
+
+    class Meta(UserCreationForm.Meta):
+        model = User
+        fields = ['username', 'first_name', 'email']

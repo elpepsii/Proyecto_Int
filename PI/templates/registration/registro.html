@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Crear cuenta — PetShop{% endblock %}
+{% block contenido %}
+    <h1>Crear cuenta</h1>
+    <p>Con tu cuenta podrás registrar las fichas de tus mascotas y comprar
+       más rápido.</p>
+
+    <form method="post" style="max-width:480px">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Registrarme</button>
+    </form>
+
+    {% if form.errors %}
+        <p class="vacio">Revisa los campos marcados.</p>
+    {% endif %}
+
+    <p>¿Ya tienes cuenta? <a href="{% url 'login' %}">Inicia sesión</a></p>
+{% endblock %}

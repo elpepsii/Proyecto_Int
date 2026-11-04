@@ -1,19 +1,4 @@
-"""
-Django settings for PI project (PetShop — Proyecto Integrado).
 
-CORREGIDO respecto al original:
-  1. INSTALLED_APPS: 'tienda' -> 'tiendaApp' (nombre real de la app) y
-     webpay vía su AppConfig.
-  2. ROOT_URLCONF / WSGI_APPLICATION: 'PI.*' -> 'Proyecto.*' (carpeta real).
-  3. TIME_ZONE: UTC -> 'America/Santiago' (proyecto chileno).
-  4. RNF-05: cierre de sesión por inactividad (15 min).
-  5. LOGIN_URL / redirecciones: las páginas con @login_required necesitan
-     saber a dónde mandar al usuario sin sesión (RF-07).
-  6. EMAIL: 'MAILERS' no existe en Django; el setting correcto es
-     EMAIL_BACKEND (consola mientras desarrollamos).
-  7. Base de datos: SQLite para desarrollo; bloque Supabase (PostgreSQL)
-     listo para cuando toque (ver README_CORRECCIONES.md).
-"""
 
 from pathlib import Path
 import os
@@ -42,7 +27,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'tiendaApp',                
-    'webpay.apps.WebpayConfig'  # <- integración Transbank (sandbox)
+    'webpay.apps.WebpayConfig'  
 ]
 
 MIDDLEWARE = [
@@ -55,7 +40,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',  
 ]
 
-ROOT_URLCONF = 'Proyecto.urls'         
+ROOT_URLCONF = 'Proyecto.urls'          
 
 TEMPLATES = [
     {
@@ -67,6 +52,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'tiendaApp.context_processors.carrito_cantidad',
             ],
         },
     },
@@ -84,8 +70,10 @@ WSGI_APPLICATION = 'Proyecto.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'lopets',
+        'USER': 'root',
+        'PASSWORD': 'inacap'
     }
 }
 
@@ -140,7 +128,10 @@ USE_TZ = True
 
 
 # Sesión — RNF-05: "cierre de sesión automático tras 15 minutos de
-# inactividad". SESSION_SAVE_EVERY_REQUEST hace que la cookie se renueve cada nueva interacción
+# inactividad". SESSION_SAVE_EVERY_REQUEST hace que la cookie se renueve en
+# cada interacción => los 15 min cuentan desde la ÚLTIMA acción (si no,
+# contarían desde el login aunque el usuario estuviera activo).
+# TIP: coméntalas mientras desarrollas para no perder la sesión a cada rato.
 SESSION_COOKIE_AGE = 15 * 60          # 900 segundos
 SESSION_SAVE_EVERY_REQUEST = True
 
@@ -160,10 +151,12 @@ STATICFILES_DIRS = [STATIC_DIR]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-
+# Imágenes de productos (RF-01) — como en el taller: admin sube la imagen,
+# queda guardada en media/productos/ y las plantillas la muestran.
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
+# Email — CORREGIDO: el setting de Django es EMAIL_BACKEND (no 'MAILERS').
 # Con 'console' los correos se imprimen en la consola de runserver (dev).
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

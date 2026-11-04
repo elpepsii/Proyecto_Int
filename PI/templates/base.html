@@ -3,6 +3,7 @@
 {#  base.html — va en la carpeta TEMPLATES DEL PROYECTO:              #}
 {#  proyecto_petshop/templates/base.html  (no dentro de tiendaApp).   #}
 {#  Configura en settings.py: 'DIRS': [BASE_DIR / 'templates'].       #}
+{#  ACTUALIZADO: nav con Carrito (badge), Mis pedidos y mensajes.     #}
 {# ------------------------------------------------------------------ #}
 {% load static %}
 <html lang="es">
@@ -23,20 +24,67 @@
         .etiqueta { display: inline-block; background: #e8efe9; border-radius: 999px;
                     padding: .1rem .6rem; margin: .1rem; font-size: .8rem; }
         .vacio { color: #999; font-style: italic; }
+
+        /* ---- Mensajes flash de las vistas (agregado, quitado, pagado...) ---- */
+        .aviso { padding: .6rem 1rem; border-radius: 8px; margin-bottom: .8rem; }
+        .aviso.success { background: #e6f4e7; border: 1px solid #b7dfbb; }
+        .aviso.error   { background: #fdecea; border: 1px solid #f5c2c0; }
+        .aviso.warning { background: #fff7e0; border: 1px solid #ffe39b; }
+        .aviso.info    { background: #e8f1fb; border: 1px solid #c3dcf5; }
+
+        /* ---- Botones y tablas (carrito, pedidos) ---- */
+        button, .boton { background: #2f6b3f; color: #fff; border: 0; border-radius: 8px;
+                         padding: .45rem .9rem; cursor: pointer; font-size: .95rem;
+                         text-decoration: none; display: inline-block; }
+        .boton.secundario { background: #e9ecef; color: #222; }
+        .boton.peligro    { background: #b02a37; }
+        table { border-collapse: collapse; width: 100%; background: #fff;
+                border-radius: 10px; overflow: hidden; }
+        th, td { text-align: left; padding: .6rem .8rem; border-bottom: 1px solid #eee; }
+        th { background: #eef3ee; }
+        .badge { display: inline-block; background: #ffca3a; color: #4a3800;
+                 border-radius: 999px; padding: 0 .5rem; font-size: .8rem; }
+        form.inline { display: inline; }
     </style>
 </head>
 <body>
     <header>
-        <nav>
-            <a href="{% url 'tiendaApp:home' %}">🐾 PetShop</a>
-            <a href="{% url 'tiendaApp:lista_productos' %}">Catálogo</a>
-            {% if user.is_authenticated %}
-                <a href="{% url 'tiendaApp:mis_fichas' %}">Mis mascotas</a>
-            {% endif %}
+        <nav style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:.5rem">
+            <div>
+                <a href="{% url 'tiendaApp:home' %}" style="margin-right:1.2rem">🐾 PetShop</a>
+                <a href="{% url 'tiendaApp:lista_productos' %}" style="margin-right:1.2rem">Catálogo</a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'tiendaApp:mis_fichas' %}" style="margin-right:1.2rem">Mis mascotas</a>
+                    <a href="{% url 'tiendaApp:mis_pedidos' %}" style="margin-right:1.2rem">Mis pedidos</a>
+                {% endif %}
+            </div>
+            <div>
+                {# El numerito lo inyecta el context processor carrito_cantidad #}
+                <a href="{% url 'tiendaApp:ver_carrito' %}" style="margin-right:1.2rem">
+                    🛒 Carrito
+                    {% if cantidad_carrito %}<span class="badge">{{ cantidad_carrito }}</span>{% endif %}
+                </a>
+                {% if user.is_authenticated %}
+                    Hola, {{ user.first_name|default:user.username }}
+                    {# logout exige POST en Django moderno: mini-formulario #}
+                    <form method="post" action="{% url 'logout' %}" style="display:inline">
+                        {% csrf_token %}
+                        <button type="submit" style="background:none;border:0;color:#fff;cursor:pointer;text-decoration:underline">Salir</button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}">Iniciar sesión</a> ·
+                    <a href="{% url 'tiendaApp:registro' %}">Registrarse</a>
+                {% endif %}
+            </div>
         </nav>
     </header>
 
     <main>
+        {# Mensajes flash: las vistas los agregan con django.contrib.messages #}
+        {% for mensaje in messages %}
+            <div class="aviso {{ mensaje.tags }}">{{ mensaje }}</div>
+        {% endfor %}
+
         {% block contenido %}{% endblock %}
     </main>
 

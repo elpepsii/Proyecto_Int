@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Iniciar sesión — PetShop{% endblock %}
+{% block contenido %}
+    <h1>Iniciar sesión</h1>
+
+    {# Esta plantilla la usa la vista de login que Django trae incluida #}
+    {# (django.contrib.auth.urls -> /cuenta/login/). Solo tuvimos que       #}
+    {# crearla porque Django no trae el HTML.                              #}
+    <form method="post" style="max-width:420px">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Entrar</button>
+    </form>
+
+    <p>¿Todavía no tienes cuenta?
+       <a href="{% url 'tiendaApp:registro' %}">Regístrate aquí</a></p>
+{% endblock %}

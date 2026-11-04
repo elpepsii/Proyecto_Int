@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Inicio — PetShop{% endblock %}
+{% block contenido %}
+    <h1>Bienvenido a la PetShop 🐾</h1>
+    <p>Alimentos, higiene y accesorios para tu mascota.</p>
+
+    <h2>Destacados</h2>
+    <div class="grid">
+        {% for p in destacados %}
+            <a class="card" href="{% url 'tiendaApp:detalle_producto' p.id %}" style="text-decoration:none">
+                {% if p.imagen %}
+                    <img src="{{ p.imagen.url }}" alt="{{ p.nombre }}"
+                         style="width:100%;height:130px;object-fit:cover;border-radius:8px;margin-bottom:.4rem">
+                {% endif %}
+                <strong>{{ p.nombre }}</strong><br>
+                <small>{{ p.get_tipo_producto_display }} · {{ p.get_animal_display }}</small><br>
+                <span class="precio">${{ p.precio }}</span><br>
+                {% if p.stock and p.stock.stock_total > 0 %}
+                    <span class="etiqueta">Hay stock</span>
+                {% else %}
+                    <span class="etiqueta">Sin stock</span>
+                {% endif %}
+            </a>
+        {% empty %}
+            <p class="vacio">Aún no hay productos cargados. Agrégalos desde el admin.</p>
+        {% endfor %}
+    </div>
+{% endblock %}

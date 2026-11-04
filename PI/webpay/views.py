@@ -1,5 +1,3 @@
-from django.shortcuts import render
-# Create your views here.
 """
 views.py — Flujo WebPay Plus en 3 pasos (SANDBOX).
 

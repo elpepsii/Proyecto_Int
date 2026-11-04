@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Mis pedidos — PetShop{% endblock %}
+{% block contenido %}
+    <h1>Mis pedidos</h1>
+
+    {% for venta in ventas %}
+        <div class="card" style="margin-bottom:1rem">
+            <p>
+                <strong>Venta #{{ venta.id }}</strong> ·
+                {{ venta.fecha_venta|date:"d/m/Y H:i" }} ·
+                {% if venta.estado == 'completada' %}
+                    <span class="etiqueta" style="background:#d9f2dc">✅ Completada</span>
+                {% elif venta.estado == 'anulada' %}
+                    <span class="etiqueta" style="background:#f8d7da">Anulada</span>
+                {% else %}
+                    <span class="etiqueta" style="background:#fff3cd">⏳ Pendiente de pago</span>
+                {% endif %}
+            </p>
+
+            {# Los detalles salen de DetalleVenta: el precio congelado al  #}
+            {# momento de la venta (snapshot), no el precio actual.        #}
+            <table>
+                <tr><th>Producto</th><th>Cant.</th><th>Precio unit.</th><th>Subtotal</th></tr>
+                {% for d in venta.detalles.all %}
+                    <tr>
+                        <td>{{ d.producto.nombre }}</td>
+                        <td>{{ d.cantidad }}</td>
+                        <td>${{ d.precio_unitario }}</td>
+                        <td>${{ d.subtotal }}</td>
+                    </tr>
+                {% endfor %}
+                <tr>
+                    <td colspan="3"><strong>Total</strong></td>
+                    <td class="precio">${{ venta.total }}</td>
+                </tr>
+            </table>
+
+            <p style="margin-top:.6rem">
+                {% if venta.estado == 'pendiente' %}
+                    {# Reintenta el pago: iniciar_pago_webpay crea un NUEVO  #}
+                    {# Pago pendiente (los intentos previos quedan FALLIDOS) #}
+                    <a class="boton" href="{% url 'webpay:iniciar' venta.id %}">💳 Pagar con WebPay</a>
+                {% elif venta.pago_autorizado %}
+                    <small>Pagado con {{ venta.pago_autorizado.get_medio_pago_display }}
+                        {% if venta.pago_autorizado.codigo_autorizacion %}
+                            · código de autorización {{ venta.pago_autorizado.codigo_autorizacion }}
+                        {% endif %}
+                    </small>
+                {% endif %}
+            </p>
+        </div>
+    {% empty %}
+        <p class="vacio">Todavía no tienes pedidos.
+           <a href="{% url 'tiendaApp:lista_productos' %}">¡Haz tu primera compra!</a></p>
+    {% endfor %}
+{% endblock %}

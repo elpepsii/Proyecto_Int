@@ -7,13 +7,14 @@ Observa el reparto que conversamos:
     calcular_total, etc.). Ninguna vista escribe 'total' ni 'subtotal'.
 """
 
+from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 
-from .forms import FichaForm
-from .models import Especie, Ficha, Producto, Stock
+from .forms import FichaForm, RegistroForm
+from .models import Cliente, Especie, Ficha, Producto, Stock
 
 
 # ----------------------------------------------------------------- Tienda
@@ -95,14 +96,20 @@ def crear_ficha(request):
     favoritos y alergias son M2M: se guardan con save_m2m() DESPUÉS de
     persistir la ficha (Django exige que la fila exista para enlazar).
     """
+    cliente = request.user.cliente_perfil
     if request.method == 'POST':
         form = FichaForm(request.POST)
         if form.is_valid():
-            ficha = form.save(commit=False)
-            ficha.cliente = request.user.cliente_perfil  # nunca del POST
-            ficha.save()
-            form.save_m2m()  # casillas de favoritos y alergias
-            return redirect('tiendaApp:mis_fichas')
+            # RNF-15: una cuenta puede tener un máximo de 20 fichas.
+            if cliente.fichas_mascotas.count() >= 20:
+                form.add_error(None, 'Tu cuenta ya tiene el máximo de '
+                                     '20 fichas de mascota (RNF-15).')
+            else:
+                ficha = form.save(commit=False)
+                ficha.cliente = cliente  # nunca del POST
+                ficha.save()
+                form.save_m2m()  # casillas de favoritos y alergias
+                return redirect('tiendaApp:mis_fichas')
     else:
         form = FichaForm()
     return render(request, 'tiendaApp/ficha_form.html', {'form': form})
@@ -124,3 +131,26 @@ def editar_ficha(request, ficha_id):
         form = FichaForm(instance=ficha)
     return render(request, 'tiendaApp/ficha_form.html',
                   {'form': form, 'ficha': ficha})
+
+
+# ------------------------------------------------------ Registro (RF-07)
+def registrar(request):
+    """Registro de clientes: crea el User (auth) y su perfil Cliente.
+    UserCreationForm valida contraseñas; el perfil se crea SOLO si el
+    usuario se guardó bien."""
+    if request.method == 'POST':
+        form = RegistroForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            Cliente.objects.create(
+                usuario_auth=user,
+                apellido=form.cleaned_data['apellido'],
+                correo=form.cleaned_data['email'],
+                telefono=form.cleaned_data['telefono'] or None,
+                direccion=form.cleaned_data['direccion'],
+            )
+            login(request, user)  # queda logueado de inmediato
+            return redirect('tiendaApp:home')
+    else:
+        form = RegistroForm()
+    return render(request, 'registration/registro.html', {'form': form})

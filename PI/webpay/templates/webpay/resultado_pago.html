@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+{# ------------------------------------------------------------------ #}
+{#  Resultado final del intento de pago (éxito, rechazo o cancelación #}
+{#  y también los errores de guardas de iniciar_pago_webpay).         #}
+{#  Autocontenida por defecto; puedes cambiarla por un                #}
+{#  {% extends "base.html" %} cuando la integres a tu diseño.         #}
+{# ------------------------------------------------------------------ #}
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>{{ titulo|default:"Resultado del pago" }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body   { font-family: system-ui, sans-serif; background: #f4f6f8;
+                 display: flex; align-items: center; justify-content: center;
+                 min-height: 100vh; margin: 0; }
+        .caja  { background: #fff; padding: 2rem 2.5rem; border-radius: 12px;
+                 box-shadow: 0 4px 16px rgba(0,0,0,.08); max-width: 480px;
+                 text-align: center; }
+        .ok    { color: #198754; } .malo { color: #dc3545; }
+        table  { margin: 1rem auto; border-collapse: collapse; text-align: left; }
+        td     { padding: .3rem .8rem; border-bottom: 1px solid #eee; }
+        td:first-child { color: #6c757d; }
+        a.boton, button { display: inline-block; margin: .4rem; padding: .6rem 1.4rem;
+                 border-radius: 8px; text-decoration: none; font-size: 1rem;
+                 border: 0; cursor: pointer; }
+        .primario { background: #0d6efd; color: #fff; }
+        .secundario { background: #e9ecef; color: #212529; }
+    </style>
+</head>
+<body>
+    <div class="caja">
+
+        {% if autorizado %}
+            <h1 class="ok">✅ ¡Pago aprobado!</h1>
+            <p>Tu pago fue autorizado por Transbank y la venta quedó
+               <strong>completada</strong>. Te enviamos el comprobante.</p>
+        {% elif fallido %}
+            <h1 class="malo">❌ Pago no realizado</h1>
+            <p>{{ mensaje|default:"El pago no se completó. La venta sigue pendiente." }}</p>
+        {% else %}
+            <h1>{{ titulo|default:"Atención" }}</h1>
+            <p>{{ mensaje }}</p>
+        {% endif %}
+
+        {% if pago %}
+            <table>
+                <tr><td>Venta</td>      <td>#{{ venta.id }}</td></tr>
+                <tr><td>Monto</td>      <td>${{ pago.monto }}</td></tr>
+                <tr><td>Medio</td>      <td>{{ pago.get_medio_pago_display }}</td></tr>
+                <tr><td>Estado</td>     <td>{{ pago.get_estado_pago_display }}</td></tr>
+                <tr><td>Orden</td>      <td>{{ pago.buy_order|default:"—" }}</td></tr>
+                {% if pago.codigo_autorizacion %}
+                <tr><td>Código auth.</td><td>{{ pago.codigo_autorizacion }}</td></tr>
+                {% endif %}
+                {% if pago.card_last4 %}
+                <tr><td>Tarjeta</td>    <td>•••• {{ pago.card_last4 }}</td></tr>
+                {% endif %}
+            </table>
+        {% endif %}
+
+        {% if fallido and venta %}
+            <a class="boton primario" href="{% url 'webpay:iniciar' venta.id %}">Intentar de nuevo</a>
+        {% endif %}
+        <a class="boton secundario" href="javascript:history.back()">Volver</a>
+
+    </div>
+</body>
+</html>

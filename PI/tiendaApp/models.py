@@ -164,8 +164,15 @@ class Producto(models.Model):
     sku = models.CharField(max_length=50, unique=True)
     nombre = models.CharField(max_length=100)
     precio = models.PositiveIntegerField()
+    # RF-01: el cliente debe ver la imagen del producto. Igual que el taller
+    # del cine: se sube desde el admin y queda en media/productos/.
+    imagen = models.ImageField('Imagen del producto', upload_to='productos',
+                               blank=True, null=True)
+    # A-02 / RF-13: el administrador ingresa costo y margen; el precio de
+    # venta sugerido se calcula (ver precio_sugerido más abajo).
+    costo = models.PositiveIntegerField(default=0)
+    margen_ganancia = models.PositiveIntegerField(default=30)  # % sobre el costo
     # Un producto puede contener varios ingredientes alérgenos
-    # Un producto puede contener varios ingredientes alérgenos (typo corregido)
     alergenos_contenidos = models.ManyToManyField(
         Alergia, blank=True, related_name='productos_afectados'
     )
@@ -184,6 +191,15 @@ class Producto(models.Model):
 
     def __str__(self):
         return f"{self.nombre} [{self.sku}]"
+
+    @property
+    def precio_sugerido(self):
+        """RF-13: precio de venta sugerido = costo + margen (CLP, sin
+        decimales). Si aún no hay costo cargado, se muestra el precio vigente.
+        Se muestra en el admin para que el administrador decida."""
+        if self.costo:
+            return round(self.costo * (1 + self.margen_ganancia / 100))
+        return self.precio
 
 class Stock(models.Model):
     producto = models.OneToOneField(Producto, on_delete=models.CASCADE, related_name='stock')

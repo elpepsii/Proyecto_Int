@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+{# ------------------------------------------------------------------ #}
+{#  Plantilla "puente" entre tu tienda y WebPay.                      #}
+{#  Transbank recomienda llegar por POST (no por GET/redirect): este  #}
+{#  form se auto-envía apenas carga la página. Es autocontenida a     #}
+{#  propósito (sin extends): el cliente solo pasa por aquí 1 segundo. #}
+{# ------------------------------------------------------------------ #}
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <title>Redirigiendo a WebPay…</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body   { font-family: system-ui, sans-serif; background: #f4f6f8;
+                 display: flex; align-items: center; justify-content: center;
+                 min-height: 100vh; margin: 0; }
+        .caja  { background: #fff; padding: 2rem 2.5rem; border-radius: 12px;
+                 box-shadow: 0 4px 16px rgba(0,0,0,.08); text-align: center; }
+        button { margin-top: 1rem; padding: .6rem 1.4rem; border: 0;
+                 border-radius: 8px; background: #0d6efd; color: #fff;
+                 font-size: 1rem; cursor: pointer; }
+        .rueda { display: inline-block; width: 28px; height: 28px;
+                 border: 3px solid #cfd8dc; border-top-color: #0d6efd;
+                 border-radius: 50%; animation: girar .8s linear infinite; }
+        @keyframes girar { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body onload="document.getElementById('puente').submit();">
+    <div class="caja">
+        <h1>Te llevamos a pagar</h1>
+        <p><span class="rueda"></span></p>
+        <p>Estás siendo redirigido a <strong>WebPay (Transbank)</strong> para
+           completar tu pago de forma segura.</p>
+        <p>Si no eres redirigido automáticamente en unos segundos:</p>
+        <form id="puente" method="POST" action="{{ url_webpay }}">
+            <input type="hidden" name="token_ws" value="{{ token_ws }}">
+            <button type="submit">Continuar al pago</button>
+        </form>
+    </div>
+</body>
+</html>
