@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="360" viewBox="0 0 480 360">
+  <rect width="480" height="360" fill="#E4F2FC"/>
+  <circle cx="240" cy="185" r="95" fill="#C7E4F6"/>
+  <!-- huellita -->
+  <g fill="#10344F" opacity="0.85">
+    <ellipse cx="240" cy="205" rx="34" ry="27"/>
+    <ellipse cx="196" cy="168" rx="14" ry="19" transform="rotate(-18 196 168)"/>
+    <ellipse cx="224" cy="148" rx="14" ry="19"/>
+    <ellipse cx="256" cy="148" rx="14" ry="19"/>
+    <ellipse cx="284" cy="168" rx="14" ry="19" transform="rotate(18 284 168)"/>
+  </g>
+  <text x="240" y="316" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif"
+        font-size="22" font-weight="bold" fill="#5A7080">PetShop</text>
+</svg>

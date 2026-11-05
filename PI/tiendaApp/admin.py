@@ -15,6 +15,7 @@ Extras usados (todos estándar de Django):
 """
 
 from django.contrib import admin
+from django.utils.html import format_html
 
 from .models import (Alergia, Administrador, Cliente, DetalleVenta, Entrega,
                      Ficha, Informe, JornadaLaboral, Pago, Preferencia,
@@ -31,12 +32,24 @@ class StockInline(admin.StackedInline):
 
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
-    list_display = ('sku', 'nombre', 'precio', 'tipo_producto', 'animal',
-                    'activo')
+    list_display = ('miniatura', 'sku', 'nombre', 'precio', 'precio_oferta',
+                    'tipo_producto', 'animal', 'activo')
+    # El precio de oferta se puede editar directo desde el listado:
+    # vacío = precio normal; con valor = aparece "En promoción" en el home.
+    list_editable = ('precio_oferta', 'activo')
     list_filter = ('activo', 'tipo_producto', 'animal', 'edad_producto')
     search_fields = ('sku', 'nombre')
     filter_horizontal = ('alergenos_contenidos',)
     inlines = [StockInline]
+
+    # Miniatura de la foto en el listado del admin.
+    @admin.display(description='Foto')
+    def miniatura(self, obj):
+        if obj.imagen:
+            return format_html(
+                '<img src="{}" style="width:46px;height:46px;'
+                'object-fit:cover;border-radius:8px" />', obj.imagen.url)
+        return '—'
 
     # El botón "desactivar" en vez de borrar (baja lógica del modelo).
     actions = ['desactivar_productos']

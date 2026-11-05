@@ -164,6 +164,11 @@ class Producto(models.Model):
     sku = models.CharField(max_length=50, unique=True)
     nombre = models.CharField(max_length=100)
     precio = models.PositiveIntegerField()
+    # PROMOCIONES: si se le asigna un precio de oferta (desde el admin), el
+    # producto aparece en la sección "En promoción" del home y en el catálogo
+    # se muestra el precio anterior tachado. Vacío = precio normal.
+    precio_oferta = models.PositiveIntegerField(
+        null=True, blank=True, verbose_name='Precio de oferta (CLP)')
     # Un producto puede contener varios ingredientes alérgenos
     # Un producto puede contener varios ingredientes alérgenos (typo corregido)
     alergenos_contenidos = models.ManyToManyField(
@@ -175,9 +180,18 @@ class Producto(models.Model):
     tamano_raza = models.CharField(max_length=30, choices=TamanoRaza.choices, default=TamanoRaza.TODAS)
     tamano_grano = models.CharField(max_length=20, choices=TamanoGrano.choices, null=True, blank=True)
     descripcion = models.TextField(blank=True)
+    # Fotografía del producto (se sube desde el admin). Si está vacía, los
+    # templates muestran un placeholder automático. Requiere Pillow.
+    imagen = models.ImageField(upload_to='productos/', null=True, blank=True,
+                               verbose_name='Imagen del producto')
 
     # BAJA LÓGICA: como DetalleVenta.producto usa PROTECT, un producto con historial de ventas NO se puede borrar de la BD; se desactiva con esto.
     activo = models.BooleanField(default=True)
+
+    @property
+    def en_oferta(self):
+        """True si el admin le asignó precio de oferta al producto."""
+        return self.precio_oferta is not None
 
     class Meta:
         ordering = ['nombre']

@@ -44,12 +44,21 @@ from .models import (Cliente, Entrega, EstadoPago, EstadoVenta, Especie,
 # 1. TIENDA PÚBLICA (RF-01, RF-02, RF-03, RF-04)
 # =====================================================================
 def home(request):
-    """Portada: productos activos como destacados + accesos rápidos."""
+    """Portada: carrusel de banners + categorías + promociones + destacados.
+
+    - categorias: tarjetas que llevan al catálogo ya filtrado (reutilizan
+      los mismos filtros GET de lista_productos: especie y tipo).
+    - promociones: productos a los que el admin les asignó 'precio_oferta'.
+    - destacados: hasta 8 productos activos (igual que antes)."""
+    promociones = (Producto.objects
+                   .filter(activo=True, precio_oferta__isnull=False)
+                   .select_related('stock')[:4])
     destacados = (Producto.objects
                   .filter(activo=True)
                   .select_related('stock')
                   .order_by('nombre')[:8])
-    return render(request, 'tiendaApp/home.html', {'destacados': destacados})
+    return render(request, 'tiendaApp/home.html',
+                  {'destacados': destacados, 'promociones': promociones})
 
 
 def lista_productos(request):
@@ -100,10 +109,12 @@ def lista_productos(request):
 
     # Rango de precio: se convierte a int de forma segura; si viene basura,
     # simplemente se ignora el filtro (no revienta la página).
-    for campo, valor in (('precio_min', precio_min), ('precio_max', precio_max)):
-        if valor.isdigit():
-            productos = productos.filter(
-                **{campo: int(valor)})
+    # OJO: 'precio_min'/'precio_max' son nombres del GET, no campos del
+    # modelo; el campo real es 'precio' (>= mínimo, <= máximo).
+    if precio_min.isdigit():
+        productos = productos.filter(precio__gte=int(precio_min))
+    if precio_max.isdigit():
+        productos = productos.filter(precio__lte=int(precio_max))
 
     # Filtro "compatible con mi mascota" (usa la ficha elegida)
     ficha = None
@@ -265,14 +276,16 @@ def registrar(request):
                 telefono=form.cleaned_data['telefono'] or None,
                 direccion=form.cleaned_data['direccion'],
             )
-            login(request, user)  # queda logueado de inmediato
-            messages.success(request, f'¡Bienvenido/a, {user.first_name}! '
+            # queda logueado de inmediato. Con varios AUTHENTICATION_BACKENDS,
+            # Django exige indicar cuál quedó asociado a la sesión (el
+            # estándar: el usuario acaba de crearse con su contraseña).
+            login(request, user, backend='django.contrib.auth.backends.ModelBackend')
+            messages.success(request, f'¡Bienvenido/a, {user.get_full_name()}! '
                                       'Tu cuenta de cliente está lista.')
             return redirect('tiendaApp:home')
     else:
         form = RegistroForm()
     return render(request, 'registration/registro.html', {'form': form})
-
 
 @login_required
 def perfil(request):

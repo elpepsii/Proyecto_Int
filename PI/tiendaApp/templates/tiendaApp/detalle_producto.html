@@ -1,53 +1,77 @@
 {% extends "base.html" %}
+{% load static %}
+{% load humanize %}
 {% block title %}{{ producto.nombre }} · PetShop{% endblock %}
 {% block contenido %}
-<p><a href="{% url 'tiendaApp:lista_productos' %}">← Volver al catálogo</a></p>
+<a class="volver-atras" href="{% url 'tiendaApp:lista_productos' %}">← Volver al catálogo</a>
 
-<div class="card">
-    <h1>{{ producto.nombre }}</h1>
-    <p>
-        <span class="etiqueta">{{ producto.get_animal_display }}</span>
-        <span class="etiqueta">{{ producto.get_tipo_producto_display }}</span>
-        <span class="etiqueta">{{ producto.get_edad_producto_display }}</span>
-        <span class="etiqueta">{{ producto.get_tamano_raza_display }}</span>
-        {% if producto.tamano_grano %}<span class="etiqueta">{{ producto.get_tamano_grano_display }}</span>{% endif %}
-    </p>
+<div class="detalle">
+    {# ---------------- Imagen del producto ---------------- #}
+    <div>
+        {% if producto.imagen %}
+            <img class="prod-img-grande" src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
+        {% else %}
+            {% with 'img/fallback-producto.svg' as ruta_fallback %}
+                <img class="prod-img-grande" src="{% static ruta_fallback %}" alt="{{ producto.nombre }}">
+            {% endwith %}
+        {% endif %}
+    </div>
 
-    <p class="precio" style="font-size:1.4rem">${{ producto.precio }}
-        <small style="color:#777">(IVA incluido)</small></p>
-
-    {% if producto.descripcion %}<p>{{ producto.descripcion }}</p>{% endif %}
-
-    {% if producto.alergenos_contenidos.all %}
-        <p><strong>⚠️ Contiene alérgenos:</strong>
-            {% for alergia in producto.alergenos_contenidos.all %}
-                <span class="etiqueta">{{ alergia.nombre }}</span>
-            {% endfor %}
+    {# ---------------- Ficha del producto ---------------- #}
+    <div class="card">
+        <h1>{{ producto.nombre }}</h1>
+        <p class="prod-tags">
+            <span class="etiqueta">{{ producto.get_animal_display }}</span>
+            <span class="etiqueta">{{ producto.get_tipo_producto_display }}</span>
+            <span class="etiqueta">{{ producto.get_edad_producto_display }}</span>
+            <span class="etiqueta">{{ producto.get_tamano_raza_display }}</span>
+            {% if producto.tamano_grano %}<span class="etiqueta">{{ producto.get_tamano_grano_display }}</span>{% endif %}
         </p>
-    {% endif %}
 
-    {% if stock %}
-        <p><strong>Stock:</strong> sala {{ stock.stock_sala }} · bodega {{ stock.stock_bodega }}
-           (total {{ stock.stock_total }})</p>
-    {% else %}
-        <p class="vacio">Sin registro de stock para este producto.</p>
-    {% endif %}
+        {% if producto.en_oferta %}
+            <p class="prod-precio">
+                <span class="etiqueta-oferta" style="position:static">OFERTA</span>
+                <span class="precio-antes">${{ producto.precio|intcomma }}</span>
+                <span class="precio-oferta">${{ producto.precio_oferta|intcomma }}</span>
+                <small>(IVA incluido)</small></p>
+        {% else %}
+            <p class="prod-precio">${{ producto.precio|intcomma }}
+                <small>(IVA incluido)</small></p>
+        {% endif %}
 
-    {% if producto.proveedores.all %}
-        <p><strong>Proveedores:</strong>
-            {% for proveedor in producto.proveedores.all %}{{ proveedor.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
-    {% endif %}
+        {% if producto.descripcion %}<p>{{ producto.descripcion }}</p>{% endif %}
 
-    {% if stock and stock.stock_total > 0 %}
-        <form method="post" action="{% url 'tiendaApp:agregar_carrito' producto.pk %}" class="acciones">
-            {% csrf_token %}
-            <label>Cantidad:
-                <input type="number" name="cantidad" value="1" min="1" max="{{ stock.stock_total }}" style="width:70px">
-            </label>
-            <button class="btn" type="submit">🛒 Agregar al carrito</button>
-        </form>
-    {% else %}
-        <p><span class="b-rojo badge">Sin stock disponible</span></p>
-    {% endif %}
+        {% if producto.alergenos_contenidos.all %}
+            <p><strong>⚠️ Contiene alérgenos:</strong>
+                {% for alergia in producto.alergenos_contenidos.all %}
+                    <span class="etiqueta">{{ alergia.nombre }}</span>
+                {% endfor %}
+            </p>
+        {% endif %}
+
+        {% if stock %}
+            <p><strong>Stock:</strong> sala {{ stock.stock_sala }} · bodega {{ stock.stock_bodega }}
+               (total {{ stock.stock_total }})</p>
+        {% else %}
+            <p class="vacio">Sin registro de stock para este producto.</p>
+        {% endif %}
+
+        {% if producto.proveedores.all %}
+            <p><strong>Proveedores:</strong>
+                {% for proveedor in producto.proveedores.all %}{{ proveedor.nombre }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
+        {% endif %}
+
+        {% if stock and stock.stock_total > 0 %}
+            <form method="post" action="{% url 'tiendaApp:agregar_carrito' producto.pk %}" class="acciones">
+                {% csrf_token %}
+                <label>Cantidad:
+                    <input type="number" name="cantidad" value="1" min="1" max="{{ stock.stock_total }}" style="width:70px">
+                </label>
+                <button class="btn amarillo" type="submit">🛒 Agregar al carrito</button>
+            </form>
+        {% else %}
+            <p><span class="badge b-rojo">Sin stock disponible</span></p>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

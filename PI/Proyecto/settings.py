@@ -1,3 +1,19 @@
+"""
+Django settings for PI project (PetShop — Proyecto Integrado).
+
+CORREGIDO respecto al original:
+  1. INSTALLED_APPS: 'tienda' -> 'tiendaApp' (el nombre real de la app) y
+     webpay se registra directo (su AppConfig es opcional).
+  2. ROOT_URLCONF / WSGI_APPLICATION: 'PI.*' -> 'Proyecto.*' (la carpeta
+     real del proyecto; manage.py y wsgi.py también se corregieron).
+  3. TIME_ZONE: UTC -> 'America/Santiago' (proyecto chileno).
+  4. RNF-05: cierre de sesión por inactividad (SESSION_COOKIE_AGE).
+  5. LOGIN_URL / LOGIN_REDIRECT_URL / LOGOUT_REDIRECT_URL: le dicen a Django
+     a dónde mandar al usuario con/sin sesión (RF-07).
+  6. EMAIL: 'MAILERS' no existe en Django; el setting correcto es
+     EMAIL_BACKEND (consola mientras desarrollamos).
+  7. Context processor del carrito (numerito en la barra de navegación).
+"""
 
 from pathlib import Path
 import os
@@ -26,6 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.humanize',   # |intcomma: precios CLP con separador de miles
     'tiendaApp',
     'webpay',
 ]
@@ -64,13 +81,12 @@ WSGI_APPLICATION = 'Proyecto.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
-
 import pymysql
 pymysql.install_as_MySQLdb()
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'lopets',
+        'NAME': 'lopets2',
         'USER': 'root',
         'PASSWORD': 'inacap'
     }
@@ -109,6 +125,16 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 # ------------------------------------------------------------- Autenticación
+# CÓMO entra un usuario (RF-07). Django prueba estas clases en orden:
+#   1. ModelBackend (estándar de Django): valida por username -> sirve para
+#      el admin y los usuarios de demostración.
+#   2. tiendaApp.backends.CorreoBackend (nuestro): si lo escrito parece un
+#      correo, valida por email -> así entran los clientes sin username.
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'tiendaApp.backends.CorreoBackend',
+]
+# ------------------------------------------------------------- Acceso
 # A dónde manda Django cuando una página pide login (@login_required)
 LOGIN_URL = 'login'
 # A dónde va el usuario después de iniciar sesión
@@ -125,6 +151,10 @@ SESSION_SAVE_EVERY_REQUEST = True  # el contador se reinicia con cada acción
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
 
 LANGUAGE_CODE = 'es'
+
+# Formato de números chileno (18.990): el locale 'es' genérico usa espacio,
+# así que lo sobrescribimos con el módulo Proyecto/formats/es.py.
+FORMAT_MODULE_PATH = 'Proyecto.formats'
 
 TIME_ZONE = 'America/Santiago'
 

@@ -1,0 +1,770 @@
+/* ==========================================================================
+   PetShop — Hoja de estilos principal
+   Paleta institucional:
+     · Celeste suave  -> color principal (fondos, acentos, botones primarios)
+     · Azul oscuro    -> contraste (cabecera, textos fuertes, precios)
+     · Amarillo       -> tonalidades pequeñas (destacados, ofertas, registro)
+     · Rojo suave     -> acompañante (alertas, sin stock, acciones de quitar)
+   ========================================================================== */
+
+:root {
+    /* Celestes (color principal) */
+    --celeste-50:  #F2FAFE;   /* fondo general de la página            */
+    --celeste-100: #E4F2FC;   /* paneles y secciones suaves            */
+    --celeste-200: #C7E4F6;   /* bordes, etiquetas, hover suave        */
+    --celeste-300: #9ED0EE;   /* detalles                              */
+    --celeste-500: #4DA3D6;   /* botón primario, enlaces               */
+    --celeste-600: #3B8CBE;   /* hover del botón primario              */
+
+    /* Azul oscuro (contraste) */
+    --azul-800: #10344F;      /* cabecera, títulos, precios            */
+    --azul-900: #0B2537;      /* hover de cabecera / footer            */
+
+    /* Amarillo (tonalidad pequeña) */
+    --amarillo-300: #FFD666;
+    --amarillo-400: #FFC93D;  /* botón "Registrarse", ofertas          */
+    --amarillo-100: #FFF4D6;  /* fondo de badges destacados            */
+
+    /* Rojo suave (acompañante) */
+    --rojo-100: #FBE5E2;      /* fondo de alertas suaves               */
+    --rojo-300: #EE8377;      /* badges "sin stock"                    */
+    --rojo-500: #D9604F;      /* botones de quitar/eliminar            */
+
+    /* Neutros */
+    --texto:       #24384A;
+    --texto-suave: #5A7080;
+    --blanco:      #FFFFFF;
+    --borde:       #D9E8F2;
+
+    --radio: 12px;
+    --sombra: 0 2px 10px rgba(16, 52, 79, .08);
+    --sombra-fuerte: 0 6px 18px rgba(16, 52, 79, .14);
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+    margin: 0;
+    background: var(--celeste-50);
+    color: var(--texto);
+    line-height: 1.5;
+}
+
+h1, h2, h3 { color: var(--azul-800); }
+h1 { font-size: 1.55rem; margin: .4rem 0 .8rem; }
+h2 { font-size: 1.25rem; margin: 1.2rem 0 .6rem; }
+h3 { font-size: 1.05rem; margin: .3rem 0; }
+a  { color: var(--celeste-600); }
+a:hover { color: var(--azul-800); }
+small { color: var(--texto-suave); }
+
+/* ==========================================================================
+   1) Barra superior fina (tonalidad amarilla pequeña, estilo aviso)
+   ========================================================================== */
+.barra-top {
+    background: var(--azul-800);
+    color: var(--amarillo-300);
+    text-align: center;
+    font-size: .8rem;
+    letter-spacing: .04em;
+    padding: .3rem 1rem;
+}
+
+/* ==========================================================================
+   2) Cabecera principal (azul oscuro = contraste)
+   ========================================================================== */
+.cabecera {
+    background: var(--azul-800);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    padding: .7rem 1.4rem;
+    flex-wrap: wrap;
+}
+
+.marca {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #fff;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: .45rem;
+    white-space: nowrap;
+}
+.marca .patita { color: var(--amarillo-400); font-size: 1.5rem; }
+.marca:hover { color: var(--celeste-200); }
+
+/* Buscador central (como distribuidora: "buscar por...") */
+.buscador {
+    flex: 1;
+    display: flex;
+    min-width: 220px;
+    max-width: 520px;
+}
+.buscador input {
+    flex: 1;
+    border: 0;
+    border-radius: 999px 0 0 999px;
+    padding: .5rem 1rem;
+    font-size: .95rem;
+    outline: none;
+}
+.buscador button {
+    border: 0;
+    background: var(--celeste-500);
+    color: #fff;
+    font-weight: 700;
+    padding: .5rem 1rem;
+    border-radius: 0 999px 999px 0;
+    cursor: pointer;
+}
+.buscador button:hover { background: var(--celeste-600); }
+
+/* Acceso: botones de iniciar sesión y registrarse en la cabecera */
+.auth {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    flex-wrap: wrap;
+}
+.auth .saludo { font-size: .9rem; color: var(--celeste-200); }
+
+.btn-fantasma {
+    display: inline-block;
+    padding: .45rem 1rem;
+    border: 2px solid var(--celeste-300);
+    border-radius: 999px;
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: .9rem;
+    background: transparent;
+    cursor: pointer;
+}
+.btn-fantasma:hover { background: rgba(255,255,255,.12); color: #fff; }
+
+.btn-registro {
+    display: inline-block;
+    padding: .45rem 1.1rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--amarillo-400);
+    color: var(--azul-900);
+    text-decoration: none;
+    font-weight: 800;
+    font-size: .9rem;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,.25);
+}
+.btn-registro:hover { background: var(--amarillo-300); color: var(--azul-900); }
+
+/* ==========================================================================
+   3) Menú de navegación (barra celeste bajo la cabecera)
+   ========================================================================== */
+.menu {
+    background: var(--celeste-100);
+    border-bottom: 3px solid var(--celeste-200);
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+    padding: .5rem 1.4rem;
+    flex-wrap: wrap;
+}
+.menu a {
+    color: var(--azul-800);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: .93rem;
+    padding: .15rem .3rem;
+    border-radius: 6px;
+}
+.menu a:hover { background: var(--celeste-200); color: var(--azul-900); }
+.menu .carrito-link {
+    margin-left: auto;
+    background: var(--azul-800);
+    color: #fff;
+    padding: .35rem .9rem;
+    border-radius: 999px;
+}
+.menu .carrito-link:hover { background: var(--azul-900); color: var(--amarillo-300); }
+.menu .carrito-link .conteo {
+    background: var(--amarillo-400);
+    color: var(--azul-900);
+    border-radius: 999px;
+    font-size: .78rem;
+    padding: 0 .45rem;
+    margin-left: .25rem;
+    font-weight: 800;
+}
+
+/* ==========================================================================
+   4) Contenido general
+   ========================================================================== */
+main {
+    max-width: 1200px;
+    margin: 1.4rem auto 2.5rem;
+    padding: 0 1.2rem;
+}
+footer.pie {
+    background: var(--azul-800);
+    color: var(--celeste-200);
+    text-align: center;
+    padding: 1.3rem 1rem;
+    font-size: .85rem;
+    margin-top: 2rem;
+}
+footer.pie a { color: var(--amarillo-300); }
+
+/* Mensajes flash (django.contrib.messages) */
+.mensajes { list-style: none; padding: 0; }
+.mensajes li {
+    padding: .6rem 1rem;
+    border-radius: var(--radio);
+    margin-bottom: .5rem;
+    font-size: .93rem;
+    border: 1px solid transparent;
+}
+.mensajes .success { background: #E5F4E8; color: #1C5B2E; border-color: #BFE3C8; }
+.mensajes .warning { background: var(--amarillo-100); color: #7A5C00; border-color: #F5E1A0; }
+.mensajes .error   { background: var(--rojo-100);  color: #8C2F24; border-color: #F3C7C1; }
+.mensajes .info    { background: var(--celeste-100); color: var(--azul-800); border-color: var(--celeste-200); }
+
+/* ==========================================================================
+   5) Botones (mantienen nombres clásicos usados en todas las vistas)
+   ========================================================================== */
+.btn {
+    display: inline-block;
+    background: var(--celeste-500);
+    color: #fff !important;
+    border: 0;
+    border-radius: 9px;
+    padding: .5rem 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none !important;
+    font-size: .93rem;
+    transition: background .15s ease;
+}
+.btn:hover { background: var(--celeste-600); }
+.btn.azul  { background: var(--azul-800); }
+.btn.azul:hover { background: var(--azul-900); }
+.btn.gris  { background: #7C8FA0; }
+.btn.gris:hover { background: #65788A; }
+.btn.rojo  { background: var(--rojo-500); }
+.btn.rojo:hover { background: #C14F3F; }
+.btn.amarillo { background: var(--amarillo-400); color: var(--azul-900) !important; }
+.btn.amarillo:hover { background: var(--amarillo-300); }
+.btn.mini { padding: .22rem .65rem; font-size: .8rem; }
+
+/* ==========================================================================
+   6) Tarjetas y grillas genéricas (home, fichas, ventas, etc.)
+   ========================================================================== */
+.card {
+    background: var(--blanco);
+    border-radius: var(--radio);
+    padding: 1.1rem 1.2rem;
+    box-shadow: var(--sombra);
+    border: 1px solid var(--borde);
+}
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+}
+.precio { font-weight: 800; color: var(--azul-800); font-size: 1.05rem; }
+.etiqueta {
+    display: inline-block;
+    background: var(--celeste-100);
+    border: 1px solid var(--celeste-200);
+    color: var(--azul-800);
+    border-radius: 999px;
+    padding: .06rem .6rem;
+    margin: .1rem .1rem .1rem 0;
+    font-size: .76rem;
+    font-weight: 600;
+}
+.vacio { color: var(--texto-suave); font-style: italic; }
+.acciones { display: flex; gap: .5rem; flex-wrap: wrap; margin: .8rem 0; align-items: center; }
+
+.badge {
+    display: inline-block;
+    border-radius: 999px;
+    padding: .1rem .65rem;
+    font-size: .78rem;
+    font-weight: 800;
+}
+.b-verde    { background: #DDF3E2; color: #1C5B2E; }
+.b-amarillo { background: var(--amarillo-100); color: #7A5C00; }
+.b-rojo     { background: var(--rojo-100);  color: #8C2F24; }
+.b-azul     { background: var(--celeste-100); color: var(--azul-800); }
+.b-gris     { background: #E8EEF3; color: #4A5A68; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--blanco);
+    border-radius: var(--radio);
+    overflow: hidden;
+    box-shadow: var(--sombra);
+    border: 1px solid var(--borde);
+}
+th, td {
+    text-align: left;
+    padding: .55rem .75rem;
+    border-bottom: 1px solid var(--borde);
+    font-size: .93rem;
+}
+th { background: var(--celeste-100); color: var(--azul-800); }
+tr:last-child td { border-bottom: 0; }
+
+.resumen { background: var(--blanco); border-radius: var(--radio); padding: 1rem;
+           box-shadow: var(--sombra); max-width: 460px; border: 1px solid var(--borde); }
+.resumen table, .resumen tr:last-child td { border-bottom: 0; box-shadow: none; border: 0; }
+
+.alerta-stock {
+    background: var(--amarillo-100);
+    border: 1px solid #F5E1A0;
+    color: #7A5C00;
+    border-radius: 9px;
+    padding: .5rem .8rem;
+    margin: .3rem 0;
+    font-size: .9rem;
+}
+
+/* ==========================================================================
+   7) CATÁLOGO — filtros a la IZQUIERDA + barra de orden horizontal
+   (interfaz tradicional de tienda, tipo Distribuidora Lira)
+   ========================================================================== */
+.catalogo {
+    display: grid;
+    grid-template-columns: 270px 1fr;   /* columna de filtros + resultados */
+    gap: 1.4rem;
+    align-items: start;
+}
+
+/* ---- Columna izquierda: herramientas de filtrado ---- */
+.col-filtros {
+    background: var(--blanco);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+    padding: 1rem 1.1rem;
+    position: sticky;
+    top: 1rem;
+}
+.col-filtros h3 {
+    margin: 0 0 .2rem;
+    font-size: 1.02rem;
+    color: var(--azul-800);
+    border-bottom: 2px solid var(--celeste-200);
+    padding-bottom: .4rem;
+}
+.filtro-grupo { padding: .65rem 0; border-bottom: 1px dashed var(--celeste-200); }
+.filtro-grupo:last-of-type { border-bottom: 0; }
+.filtro-grupo > label {
+    display: block;
+    font-size: .78rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--celeste-600);
+    margin-bottom: .3rem;
+}
+.filtro-grupo select,
+.filtro-grupo input {
+    width: 100%;
+    padding: .4rem .55rem;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    font-size: .9rem;
+    background: var(--celeste-50);
+}
+.filtro-grupo select:focus,
+.filtro-grupo input:focus { outline: 2px solid var(--celeste-300); background: #fff; }
+.filtro-rango { display: flex; gap: .5rem; align-items: center; }
+.filtro-rango input { width: 100%; }
+.col-filtros .nota-ficha {
+    background: var(--amarillo-100);
+    border-radius: 8px;
+    padding: .5rem .6rem;
+    font-size: .8rem;
+    color: #7A5C00;
+    margin-top: .6rem;
+}
+
+/* ---- Barra horizontal "Ordenar por" al inicio del catálogo ---- */
+.barra-orden {
+    background: var(--blanco);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+    display: flex;
+    align-items: center;
+    gap: .9rem;
+    padding: .55rem 1rem;
+    margin-bottom: 1.1rem;
+    flex-wrap: wrap;
+}
+.barra-orden .conteo { font-size: .92rem; color: var(--texto-suave); }
+.barra-orden .conteo strong { color: var(--azul-800); }
+.barra-orden label {
+    font-size: .8rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+    color: var(--celeste-600);
+}
+.barra-orden select {
+    padding: .38rem .6rem;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    background: var(--celeste-50);
+    font-size: .9rem;
+    font-weight: 600;
+    color: var(--azul-800);
+}
+.barra-orden .limpiar { margin-left: auto; font-size: .85rem; }
+
+/* ---- Grilla de productos (cards estilo tienda) ---- */
+.grid-productos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
+    gap: 1.1rem;
+}
+.prod-card {
+    background: var(--blanco);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform .12s ease, box-shadow .12s ease;
+}
+.prod-card:hover { transform: translateY(-3px); box-shadow: var(--sombra-fuerte); }
+.prod-img-wrap {
+    display: block;
+    background: var(--celeste-100);
+    aspect-ratio: 4 / 3;
+    overflow: hidden;
+}
+.prod-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.prod-cuerpo {
+    padding: .7rem .85rem .9rem;
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    flex: 1;
+}
+.prod-nombre {
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--azul-800);
+    text-decoration: none;
+    line-height: 1.3;
+    min-height: 2.5em;
+}
+.prod-nombre:hover { color: var(--celeste-600); }
+.prod-tags { display: flex; flex-wrap: wrap; gap: .15rem; }
+.prod-precio {
+    font-size: 1.18rem;
+    font-weight: 800;
+    color: var(--azul-800);
+    margin-top: auto;
+}
+.prod-precio small { font-size: .72rem; font-weight: 600; color: var(--texto-suave); }
+.prod-pie { display: flex; gap: .45rem; margin-top: .45rem; }
+.prod-pie form { margin: 0; }
+.prod-pie .btn { flex: 1; text-align: center; }
+
+/* ==========================================================================
+   8) Detalle de producto (imagen a la izquierda, ficha técnica a la derecha)
+   ========================================================================== */
+.detalle {
+    display: grid;
+    grid-template-columns: minmax(280px, 460px) 1fr;
+    gap: 1.6rem;
+    align-items: start;
+}
+.detalle .prod-img-grande {
+    width: 100%;
+    border-radius: var(--radio);
+    border: 1px solid var(--borde);
+    box-shadow: var(--sombra);
+    background: var(--celeste-100);
+    display: block;
+}
+.volver-atras { display: inline-block; margin-bottom: .8rem; font-size: .9rem; }
+
+/* ==========================================================================
+   9) Formularios genéricos (login, registro, fichas, checkout, POS...)
+   ========================================================================== */
+form p, form li { margin: .45rem 0; }
+input[type=text], input[type=number], input[type=email],
+input[type=password], input[type=date], select, textarea {
+    padding: .45rem .6rem;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    min-width: 120px;
+    font-size: .93rem;
+    background: #fff;
+}
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--celeste-300); }
+ul#id_alergias, ul#id_favoritos { list-style: none; padding-left: 0; columns: 2; }
+
+/* ==========================================================================
+   10) Paginación
+   ========================================================================== */
+.paginacion {
+    margin: 1.4rem 0;
+    display: flex;
+    gap: .6rem;
+    justify-content: center;
+    align-items: center;
+    font-size: .9rem;
+}
+
+/* ==========================================================================
+   11) Responsive: en pantallas angostas los filtros quedan ARRIBA
+   ========================================================================== */
+@media (max-width: 860px) {
+    .catalogo { grid-template-columns: 1fr; }
+    .col-filtros { position: static; }
+    .detalle { grid-template-columns: 1fr; }
+    .cabecera { gap: .7rem; }
+    .buscador { order: 3; min-width: 100%; }
+    .auth { margin-left: auto; }
+    .form-grid { grid-template-columns: 1fr; }   /* registro: una columna */
+}
+
+/* ---- Grilla del formulario de registro (Nombre y Apellido juntos) ---- */
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;   /* dos columnas: nombre | apellido */
+    gap: .7rem 1rem;
+}
+.form-grid .campo label {
+    display: block;
+    font-weight: 700;
+    font-size: .88rem;
+    color: var(--azul-800);
+    margin-bottom: .25rem;
+}
+.form-grid .campo input,
+.form-grid .campo select {
+    width: 100%;
+}
+.form-grid .campo.completo { grid-column: 1 / -1; }   /* fila completa */
+.form-grid .campo .ayuda {
+    display: block;
+    color: var(--texto-suave);
+    font-size: .78rem;
+    margin-top: .2rem;
+}
+.form-grid .campo .ayuda ul { margin: .15rem 0 0; padding-left: 1rem; }
+.form-grid .campo .ayuda li { margin: .05rem 0; }
+
+/* Errores de campo (Django los dibuja como <ul class="errorlist">) */
+.form-grid .errorlist {
+    list-style: none;
+    padding: 0;
+    margin: .2rem 0 0;
+}
+.form-grid .errorlist li {
+    margin: .1rem 0;
+    color: #8C2F24;
+    font-size: .8rem;
+    font-weight: 700;
+    background: var(--rojo-100);
+    border-radius: 6px;
+    padding: .12rem .5rem;
+    display: inline-block;
+}
+
+/* ==========================================================================
+   12) Home nuevo: carrusel + categorías + promociones
+   ========================================================================== */
+
+/* ---------- Carrusel de banners ---------- */
+.carrusel {
+    position: relative;
+    border-radius: var(--radio);
+    overflow: hidden;
+    box-shadow: var(--sombra);
+    background: var(--azul-800);   /* fondo mientras carga la imagen */
+}
+.carrusel-slide { display: none; }
+.carrusel-slide.activa { display: block; }
+.carrusel-slide img {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1200 / 360;      /* banners siempre proporcionados */
+    object-fit: cover;
+    display: block;
+}
+.carrusel-ant, .carrusel-sig {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .85);
+    color: var(--azul-800);
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background .15s;
+}
+.carrusel-ant:hover, .carrusel-sig:hover { background: var(--amarillo-300); }
+.carrusel-ant { left: 12px; }
+.carrusel-sig { right: 12px; }
+
+.carrusel-puntos {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: .45rem;
+}
+.punto {
+    width: 11px;
+    height: 11px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, .55);
+    cursor: pointer;
+    padding: 0;
+}
+.punto.activa { background: var(--amarillo-400); }
+
+/* ---------- Secciones de la portada ---------- */
+.seccion-inicio { margin-top: 1.8rem; }
+.seccion-inicio h2 { margin-bottom: .9rem; }
+
+/* ---------- Tarjetas de categorías ---------- */
+.grid-categorias {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+.cat-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .3rem;
+    background: var(--blanco);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    padding: 1.2rem .8rem;
+    text-decoration: none;
+    text-align: center;
+    box-shadow: var(--sombra);
+    transition: transform .15s, border-color .15s;
+}
+.cat-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--celeste-300);
+}
+.cat-icono { font-size: 2.2rem; }
+.cat-nombre { font-weight: 700; color: var(--azul-800); }
+.cat-ver { font-size: .8rem; color: var(--celeste-600); font-weight: 700; }
+
+/* ---------- Productos en promoción ---------- */
+.etiqueta-oferta {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    background: var(--amarillo-400);
+    color: var(--azul-800);
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .04em;
+    padding: .18rem .55rem;
+    border-radius: 999px;
+    box-shadow: var(--sombra);
+}
+.prod-oferta .prod-img-wrap { position: relative; }
+.precio-antes {
+    color: var(--texto-suave);
+    text-decoration: line-through;
+    font-size: .9rem;
+    margin-right: .45rem;
+}
+.precio-oferta {
+    color: var(--rojo-500);
+    font-weight: 800;
+}
+
+/* ==========================================================================
+   13) Footer con casillas de datos del local
+   ========================================================================== */
+footer.pie {
+    background: var(--azul-900);
+    color: var(--celeste-200);
+    text-align: left;
+    padding: 0;
+    font-size: .9rem;
+    margin-top: 2.5rem;
+}
+.pie-grid {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1fr;
+    gap: 1.5rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 1.8rem 1.2rem;
+}
+.pie-logo {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--blanco);
+    margin: 0 0 .5rem;
+}
+.pie-texto { margin: .3rem 0; line-height: 1.5; }
+.pie-col h3 {
+    font-size: .95rem;
+    color: var(--amarillo-300);
+    margin: 0 0 .55rem;
+    font-weight: 800;
+}
+.pie-datos {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    line-height: 1.7;
+}
+.pie-datos li strong { color: var(--blanco); }
+.pie-base {
+    border-top: 1px solid rgba(255, 255, 255, .12);
+    text-align: center;
+    padding: .8rem 1rem;
+    font-size: .8rem;
+    color: var(--celeste-300);
+}
+
+/* ---------- Responsive de portada y footer ---------- */
+@media (max-width: 860px) {
+    .grid-categorias { grid-template-columns: repeat(2, 1fr); }
+    .pie-grid { grid-template-columns: 1fr 1fr; }
+    .carrusel-ant, .carrusel-sig {
+        width: 34px;
+        height: 34px;
+        font-size: 1.3rem;
+    }
+}
+@media (max-width: 560px) {
+    .grid-categorias { grid-template-columns: 1fr; }
+    .pie-grid { grid-template-columns: 1fr; }
+}

@@ -6,18 +6,63 @@
    guardar tus fichas de mascota, agilizar compras y seguir tus pedidos.
    Las cuentas de vendedor las crea el administrador.</p>
 
-<div class="card" style="max-width:520px">
-    <form method="post">
+<div class="card" style="max-width:640px">
+    {# novalidate: dejamos que Django valide (mensajes en español) #}
+    <form method="post" novalidate>
         {% csrf_token %}
         {{ form.non_field_errors }}
-        {% for campo in form %}
-            <p>
-                {{ campo.label_tag }}<br>
-                {{ campo }}
-                {% if campo.help_text %}<br><small style="color:#777">{{ campo.help_text }}</small>{% endif %}
-                {% for e in campo.errors %}<br><span class="b-rojo badge">{{ e }}</span>{% endfor %}
-            </p>
-        {% endfor %}
+
+        {# Campos dibujados uno a uno: así controlamos el ORDEN y la grilla (.form-grid). #}
+        {# Nombre y Apellido quedan juntos en la misma fila; "completo" = fila entera. #}
+        <div class="form-grid">
+
+            <div class="campo">
+                {{ form.first_name.label_tag }}
+                {{ form.first_name }}
+                {{ form.first_name.errors }}
+            </div>
+
+            <div class="campo">
+                {{ form.apellido.label_tag }}
+                {{ form.apellido }}
+                {{ form.apellido.errors }}
+            </div>
+
+            <div class="campo">
+                {{ form.email.label_tag }}
+                {{ form.email }}
+                {{ form.email.errors }}
+            </div>
+
+            <div class="campo">
+                {{ form.telefono.label_tag }}
+                {{ form.telefono }}
+                {{ form.telefono.errors }}
+            </div>
+
+            <div class="campo completo">
+                {{ form.direccion.label_tag }}
+                {{ form.direccion }}
+                {{ form.direccion.errors }}
+            </div>
+
+            <div class="campo">
+                {{ form.password1.label_tag }}
+                {{ form.password1 }}
+                {% if form.password1.help_text %}
+                    <small class="ayuda">{{ form.password1.help_text }}</small>
+                {% endif %}
+                {{ form.password1.errors }}
+            </div>
+
+            <div class="campo">
+                {{ form.password2.label_tag }}
+                {{ form.password2 }}
+                {{ form.password2.errors }}
+            </div>
+
+        </div>
+
         <button class="btn" type="submit">Crear cuenta</button>
     </form>
 </div>

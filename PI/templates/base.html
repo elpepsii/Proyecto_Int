@@ -3,96 +3,65 @@
 <html lang="es">
 <head>
     <meta charset="utf-8">
-    <title>{% block title %}PetShop{% endblock %}</title>
+    <title>{% block title %}PetShop — Todo para tu mascota{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body { font-family: system-ui, sans-serif; margin: 0; background: #f7f7f2; color: #222; }
-        header { background: #2f6b3f; color: #fff; padding: .8rem 1.5rem; display: flex; flex-wrap: wrap; align-items: center; gap: 1rem; }
-        header .marca { font-weight: 800; font-size: 1.1rem; color: #fff; text-decoration: none; }
-        header nav { display: flex; flex-wrap: wrap; gap: .9rem; align-items: center; }
-        header nav a { color: #fff; text-decoration: none; font-weight: 600; }
-        header nav a:hover { text-decoration: underline; }
-        header .derecha { margin-left: auto; display: flex; gap: .8rem; align-items: center; }
-        main { max-width: 1050px; margin: 1.5rem auto; padding: 0 1rem; }
-        footer { text-align: center; color: #777; padding: 1.5rem; font-size: .85rem; }
-        h1 { font-size: 1.5rem; } h2 { font-size: 1.2rem; }
-        a { color: #2f6b3f; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
-        .card { background: #fff; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,.07); }
-        .precio { font-weight: 700; color: #1a4426; }
-        .etiqueta { display: inline-block; background: #e8efe9; border-radius: 999px; padding: .1rem .6rem; margin: .1rem; font-size: .8rem; }
-        .vacio { color: #999; font-style: italic; }
-        table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,.07); }
-        th, td { text-align: left; padding: .55rem .7rem; border-bottom: 1px solid #eee; font-size: .95rem; }
-        th { background: #eef3ee; }
-        form p, form li { margin: .4rem 0; }
-        input[type=text], input[type=number], input[type=email], input[type=password], select, textarea {
-            padding: .4rem .5rem; border: 1px solid #bbb; border-radius: 6px; min-width: 120px; }
-        ul#id_alergias, ul#id_favoritos { list-style: none; padding-left: 0; columns: 2; }
-        .btn { display: inline-block; background: #2f6b3f; color: #fff !important; border: 0; border-radius: 8px;
-               padding: .5rem 1rem; font-weight: 700; cursor: pointer; text-decoration: none; font-size: .95rem; }
-        .btn.rojo { background: #a33; } .btn.gris { background: #777; } .btn.azul { background: #2c5f9e; }
-        .btn.mini { padding: .2rem .6rem; font-size: .8rem; }
-        .mensajes { list-style: none; padding: 0; }
-        .mensajes li { padding: .55rem .9rem; border-radius: 8px; margin-bottom: .4rem; font-size: .93rem; }
-        .mensajes .success { background: #e3f3e5; color: #1a4426; }
-        .mensajes .warning { background: #fdf3d7; color: #6b5900; }
-        .mensajes .error   { background: #fde3e3; color: #7a1f1f; }
-        .mensajes .info    { background: #e3eef9; color: #1d3d63; }
-        .badge { display: inline-block; border-radius: 999px; padding: .1rem .6rem; font-size: .8rem; font-weight: 700; }
-        .b-verde  { background: #d9f2dd; color: #1a4426; }
-        .b-amarillo { background: #fdf0c2; color: #6b5900; }
-        .b-rojo   { background: #f8d3d3; color: #7a1f1f; }
-        .b-azul   { background: #d8e8f8; color: #1d3d63; }
-        .b-gris   { background: #e5e5e5; color: #444; }
-        .paginacion { margin: 1rem 0; display: flex; gap: .6rem; justify-content: center; }
-        .resumen { background: #fff; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,.07); max-width: 420px; }
-        .resumen table, .resumen tr:last-child td { border-bottom: 0; }
-        .acciones { display: flex; gap: .5rem; flex-wrap: wrap; margin: .8rem 0; }
-        .filtros { background: #fff; border-radius: 10px; padding: 1rem; box-shadow: 0 2px 6px rgba(0,0,0,.07); margin-bottom: 1rem; }
-        .filtros .fila { display: flex; flex-wrap: wrap; gap: .6rem; align-items: end; }
-        .filtros label { display: block; font-size: .78rem; color: #555; font-weight: 700; }
-        .alerta-stock { background: #fdf0c2; border-radius: 8px; padding: .5rem .8rem; margin: .3rem 0; font-size: .9rem; }
-    </style>
+    <link rel="stylesheet" href="{% static 'css/estilos.css' %}">
 </head>
 <body>
-    <header>
-        <a class="marca" href="{% url 'tiendaApp:home' %}">🐾 PetShop</a>
-        <nav>
-            <a href="{% url 'tiendaApp:lista_productos' %}">Catálogo</a>
+    {# Franja superior: tonalidad amarilla pequeña sobre azul oscuro #}
+    <div class="barra-top">🐾 Despacho a domicilio · Precios con IVA incluido · Pago seguro con WebPay</div>
+
+    {# Cabecera: marca + buscador + botones de acceso #}
+    <header class="cabecera">
+        <a class="marca" href="{% url 'tiendaApp:home' %}"><span class="patita">🐾</span> PetShop</a>
+
+        <form class="buscador" method="get" action="{% url 'tiendaApp:lista_productos' %}">
+            <input type="text" name="q" value="{{ request.GET.q|default:'' }}"
+                   placeholder="Buscar productos, marcas y más..." aria-label="Buscar">
+            <button type="submit">Buscar</button>
+        </form>
+
+        <div class="auth">
             {% if user.is_authenticated %}
-                <a href="{% url 'tiendaApp:ver_carrito' %}">🛒 Carrito ({{ cantidad_carrito }})</a>
-                {% if user.cliente_perfil %}
-                    <a href="{% url 'tiendaApp:mis_fichas' %}">Mis mascotas</a>
-                    <a href="{% url 'tiendaApp:mis_compras' %}">Mis compras</a>
-                    <a href="{% url 'tiendaApp:perfil' %}">Mi perfil</a>
-                {% endif %}
-                {% if user.vendedor_perfil %}
-                    <a href="{% url 'tiendaApp:panel_vendedor' %}">Panel vendedor</a>
-                    <a href="{% url 'tiendaApp:pos_venta' %}">Venta POS</a>
-                    <a href="{% url 'tiendaApp:ventas_lista' %}">Ventas</a>
-                    <a href="{% url 'tiendaApp:entregas' %}">Entregas</a>
-                    <a href="{% url 'tiendaApp:jornadas' %}">Jornadas</a>
-                {% endif %}
-                {% if user.is_staff %}
-                    <a href="{% url 'tiendaApp:crear_vendedor' %}">+ Vendedor</a>
-                    <a href="/admin/">Django admin</a>
-                {% endif %}
-            {% endif %}
-        </nav>
-        <div class="derecha">
-            {% if user.is_authenticated %}
-                <span>👤 {{ user.get_username }}</span>
-                <form method="post" action="{% url 'logout' %}" style="display:inline">
+                {# get_full_name = "Nombre Apellido"; si el usuario no tiene #}
+                {# nombre guardado (p.ej. admin), se muestra su username.     #}
+                <span class="saludo">👤 {{ user.get_full_name|default:user.get_username }}</span>
+                <form method="post" action="{% url 'logout' %}">
                     {% csrf_token %}
-                    <button class="btn mini gris" type="submit">Cerrar sesión</button>
+                    <button class="btn-fantasma" type="submit">Cerrar sesión</button>
                 </form>
             {% else %}
-                <a href="{% url 'login' %}">Iniciar sesión</a>
-                <a class="btn mini" href="{% url 'tiendaApp:registro' %}">Crear cuenta</a>
+                {# Botones de acceso pedidos en el header #}
+                <a class="btn-fantasma" href="{% url 'login' %}">Iniciar sesión</a>
+                <a class="btn-registro" href="{% url 'tiendaApp:registro' %}">Registrarse</a>
             {% endif %}
         </div>
     </header>
+
+    {# Menú principal: barra celeste de navegación #}
+    <nav class="menu">
+        <a href="{% url 'tiendaApp:lista_productos' %}">Catálogo</a>
+        {% if user.is_authenticated %}
+            {% if user.cliente_perfil %}
+                <a href="{% url 'tiendaApp:mis_fichas' %}">Mis mascotas</a>
+                <a href="{% url 'tiendaApp:mis_compras' %}">Mis compras</a>
+                <a href="{% url 'tiendaApp:perfil' %}">Mi perfil</a>
+            {% endif %}
+            {% if user.vendedor_perfil %}
+                <a href="{% url 'tiendaApp:panel_vendedor' %}">Panel vendedor</a>
+                <a href="{% url 'tiendaApp:pos_venta' %}">Venta POS</a>
+                <a href="{% url 'tiendaApp:ventas_lista' %}">Ventas</a>
+                <a href="{% url 'tiendaApp:entregas' %}">Entregas</a>
+                <a href="{% url 'tiendaApp:jornadas' %}">Jornadas</a>
+            {% endif %}
+            {% if user.is_staff %}
+                <a href="{% url 'tiendaApp:crear_vendedor' %}">+ Vendedor</a>
+                <a href="/admin/">Administración</a>
+            {% endif %}
+        {% endif %}
+        <a class="carrito-link" href="{% url 'tiendaApp:ver_carrito' %}">🛒 Carrito
+            <span class="conteo">{{ cantidad_carrito }}</span></a>
+    </nav>
 
     <main>
         {% if messages %}
@@ -106,6 +75,56 @@
         {% block contenido %}{% endblock %}
     </main>
 
-    <footer>PetShop — Proyecto académico · {{ user.is_authenticated|yesno:"sesión iniciada,visitante" }}</footer>
+    {# ============================ FOOTER ============================ #}
+    {# Las 4 casillas (horario, contacto, dirección) son PLANTILLAS:    #}
+    {# reemplaza los textos de ejemplo por los datos reales del local.  #}
+    <footer class="pie">
+        <div class="pie-grid">
+
+            <div class="pie-col pie-marca">
+                <p class="pie-logo"><span class="patita">🐾</span> PetShop</p>
+                <p class="pie-texto">Alimento, higiene y accesorios para tu
+                   mascota. Despacho a domicilio o retiro en tienda.</p>
+                <p class="pie-texto">Pago seguro con <strong>WebPay</strong> ·
+                   Precios con IVA incluido.</p>
+            </div>
+
+            <div class="pie-col">
+                {# CASILLA 1: horario de atención del local #}
+                <h3>🕒 Horario de atención</h3>
+                <ul class="pie-datos">
+                    <li>Lunes a viernes: <strong>9:00 – 18:00</strong></li>
+                    <li>Sábado: <strong>9:30 – 20:00</strong></li>
+                    <li>Domingo y festivos: <strong>Cerrado</strong></li>
+                </ul>
+            </div>
+
+            <div class="pie-col">
+                {# CASILLA 2: contacto WhatsApp y correo #}
+                <h3>💬 Contacto</h3>
+                <ul class="pie-datos">
+                    <li>WhatsApp: <strong>+56 9 1234 5678</strong></li>
+                    <li>Correo: <strong>contacto@petshop.cl</strong></li>
+                    <li><a href="https://wa.me/56912345678" target="_blank" rel="noopener">Escríbenos por WhatsApp →</a></li>
+                </ul>
+            </div>
+
+            <div class="pie-col">
+                {# CASILLA 3: dirección del local #}
+                <h3>📍 Dirección</h3>
+                <ul class="pie-datos">
+                    <li><strong>Av. Ejemplo 1234</strong></li>
+                    <li>Comuna · Santiago, Chile</li>
+                    <li><a href="https://maps.google.com/?q=Av.+Ejemplo+1234+Santiago" target="_blank" rel="noopener">Ver en el mapa →</a></li>
+                </ul>
+            </div>
+
+        </div>
+
+        <div class="pie-base">
+            <small>PetShop — Proyecto académico · Santiago de Chile ·
+                   {{ user.is_authenticated|yesno:"sesión iniciada,visitante" }}</small>
+        </div>
+    </footer>
 </body>
 </html>
