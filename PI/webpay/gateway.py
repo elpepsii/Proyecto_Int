@@ -48,17 +48,15 @@ def crear_transaccion(buy_order, session_id, monto, return_url):
 
 
 def confirmar_transaccion(token_ws):
-    """Paso 3 del flujo: confirma el pago (commit) tras el POST de vuelta.
-
-    Devuelve un DICT con la respuesta de Transbank, ej.:
+    """Devuelve un DICT con la respuesta de Transbank, ej.:
       {
         'vci': 'TSY', 'amount': 12500, 'status': 'AUTHORIZED',
         'buy_order': 'PS-000012-A1B2C3D4', 'session_id': 'venta-12-...',
-        'card_detail': {'card_number': '6623'},   # últimos 4 dígitos
+        'card_detail': {'card_number': '6623'},    últimos 4 dígitos
         'transaction_date': '2026-10-31T15:04:05.000Z',
         'authorization_code': '123456',
-        'payment_type_code': 'VD',                # VD=débito, VN=crédito sin cuotas...
-        'response_code': 0,                       # 0 = autorizado
+        'payment_type_code': 'VD',                 VD=débito, VN=crédito sin cuotas...
+        'response_code': 0,
         'installments_number': 0, 'installments_amount': None,
       }
     response_code != 0 => tarjeta rechazada (ver códigos en la doc de Transbank).
@@ -73,8 +71,6 @@ def consultar_transaccion(token_ws):
     return Transaction(SANDBOX_OPTIONS).status(token_ws)
 
 
-# ----------------------------------------------------------- generadores ---
-# buy_order: Transbank exige MÁXIMO 26 caracteres alfanuméricos y que sea
 # ÚNICA por intento. Formato "PS-000012-A1B2C3D4" (18 chars):
 #   PS-        prefijo del proyecto
 #   000012     id del Pago en TU base de datos (trazabilidad)

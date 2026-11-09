@@ -1,24 +1,5 @@
 from django.shortcuts import render
 # Create your views here.
-"""
-views.py — Flujo WebPay Plus en 3 pasos (SANDBOX).
-
-  1) iniciar_pago_webpay : crea el Pago (pendiente), registra la transacción
-     en Transbank y muestra el "puente" que hace POST automático a WebPay.
-  2) (El cliente paga —o cancela— en el sitio de Transbank.)
-  3) retorno_webpay      : Transbank hace POST de vuelta a TU servidor con el
-     token; aquí se confirma (commit) y se cierra el Pago. La lógica del
-     Pago.save() de tu models.py es la que deja la Venta COMPLETADA.
-
-Reparto de responsabilidades (lo conversado sobre el "fat model"):
-  - VIEWS de esta app  -> orquestación del flujo externo (cuándo).
-  - Pago.save()        -> reglas internas de tu negocio (qué pasa).
-  - gateway.py         -> detalle técnico del SDK (cómo hablar con la API).
-
-APP PRINCIPAL: ya configurado para 'tiendaApp'. Si en INSTALLED_APPS la
-registraste con otro nombre exacto, cambia SOLO la línea de import de
-más abajo (nadie más de este archivo toca rutas ni nombres).
-"""
 
 import logging
 from datetime import datetime
@@ -119,20 +100,28 @@ def iniciar_pago_webpay(request, venta_id):
 
 # ------------------------------------------------------------------ Paso 3
 @csrf_exempt  # Transbank es un servidor externo: no puede llevar tu CSRF token
-@require_http_methods(["POST"])
+@require_http_methods(["GET", "POST"])
 def retorno_webpay(request):
     """Transbank hace POST aquí al terminar. Dos escenarios posibles:
 
     A) El cliente ABORTÓ (botón cancelar), el formulario expiró (>10 min)
        o hubo un doble POST: Transbank envía TBK_TOKEN (+ TBK_ORDEN_COMPRA).
     B) El flujo normal: envía token_ws y confirmamos con commit.
+
+    IMPORTANTE: el token puede llegar por POST (flujo clásico de WebPay)
+    o por GET (redirección después de la autenticación bancaria 3D Secure
+    que muestran los SDK nuevos). Por eso este método acepta ambos y lee
+    el token de request.POST o de request.GET indistintamente.
     """
+    # Unificamos de dónde salen los datos según el método que llegó.
+    datos = request.POST if request.method == 'POST' else request.GET
+
     # ---------------- Escenario A: pago abandonado -----------------------
-    if 'TBK_TOKEN' in request.POST:
-        return _pago_abandonado(request)
+    if 'TBK_TOKEN' in datos:
+        return _pago_abandonado(request, datos)
 
     # ---------------- Escenario B: flujo normal --------------------------
-    token_ws = request.POST.get('token_ws')
+    token_ws = datos.get('token_ws')
     if not token_ws:
         return _resultado(request, None,
                           titulo='Llamada inválida',
@@ -187,9 +176,9 @@ def retorno_webpay(request):
 
 
 # ----------------------------------------------------------------- helpers
-def _pago_abandonado(request):
+def _pago_abandonado(request, datos):
     """Caso A del retorno: el cliente no terminó el pago (o doble POST)."""
-    buy_order = request.POST.get('TBK_ORDEN_COMPRA')
+    buy_order = datos.get('TBK_ORDEN_COMPRA')
     pago = None
     if buy_order:
         pago = (Pago.objects

@@ -157,6 +157,45 @@ class PerfilForm(forms.ModelForm):
         return correo
 
 
+# --------------------------------------------------- Validación de RUT
+def normalizar_rut(valor):
+    """Valida un RUT chileno y lo devuelve normalizado '12.345.678-5'.
+
+    Acepta con o sin puntos/guion ('12345678-5', '123456785',
+    '12.345.678-5') y valida el dígito verificador con el algoritmo
+    MÓDULO 11 (el estándar del Registro Civil). Si el formato o el
+    dígito están mal, lanza ValidationError y Django lo muestra bajo
+    el campo."""
+    rut = (valor or '').strip().upper().replace('.', '').replace('-', '')
+
+    # El cuerpo son 7 u 8 dígitos y el DV un número o 'K' (nada más).
+    if not re.fullmatch(r'\d{7,8}[\dK]', rut):
+        raise forms.ValidationError(
+            'RUT inválido. Usa el formato 12.345.678-5 (7 u 8 dígitos '
+            'más el dígito verificador).')
+
+    cuerpo, dv = rut[:-1], rut[-1]
+    # MÓDULO 11: se multiplica cada dígito por la serie 2,3,4,5,6,7 (y
+    # vuelve a 2), se suma y se calcula el DV según el resto.
+    suma, factor = 0, 2
+    for digito in reversed(cuerpo):
+        suma += int(digito) * factor
+        factor = 2 if factor == 7 else factor + 1
+    resto = 11 - (suma % 11)
+    dv_calculado = '0' if resto == 11 else ('K' if resto == 10
+                                            else str(resto))
+    if dv != dv_calculado:
+        raise forms.ValidationError(
+            f'El dígito verificador no corresponde: el RUT {cuerpo} '
+            f'termina en -{dv_calculado}, no en -{dv}.')
+
+    # Se devuelve con puntos para que todas las ventas queden uniformes.
+    rev = cuerpo[::-1]
+    con_puntos = '.'.join(rev[i:i + 3]
+                          for i in range(0, len(rev), 3))[::-1]
+    return f'{con_puntos}-{dv}'
+
+
 # ------------------------------------------------------ Checkout (RF-06)
 class CheckoutForm(forms.Form):
     """Datos de la venta web: entrega y documento. El total NO se pregunta:
@@ -180,9 +219,16 @@ class CheckoutForm(forms.Form):
         initial='boleta',
     )
     rut_factura = forms.CharField(
-        max_length=20, required=False, label='RUT de facturación')
+        max_length=20, required=False, label='RUT de facturación',
+        help_text='Formato: 12.345.678-5 (se valida el dígito verificador).')
     razon_social = forms.CharField(
         max_length=100, required=False, label='Razón social')
+
+    def clean_rut_factura(self):
+        """Se ejecuta solo si el campo trae algo (es opcional). Valida el
+        formato y el dígito verificador, y guarda el RUT normalizado."""
+        valor = self.cleaned_data.get('rut_factura', '').strip()
+        return normalizar_rut(valor) if valor else valor
 
     def clean(self):
         """Reglas cruzadas: factura exige RUT y razón social; si es retiro,
@@ -223,12 +269,17 @@ class POSVentaForm(forms.Form):
     correo_cliente = forms.EmailField(required=False,
                                       label='Correo del cliente (opcional)')
 
+    def clean_rut_factura(self):
+        """Igual que en CheckoutForm: valida y normaliza si trae algo."""
+        valor = self.cleaned_data.get('rut_factura', '').strip()
+        return normalizar_rut(valor) if valor else valor
+
     def clean(self):
         datos = super().clean()
-        if (datos.get('tipo_documento') == 'factura'
-                and not datos.get('rut_factura')):
-            raise forms.ValidationError(
-                'Para factura debes indicar el RUT.')
+        if datos.get('tipo_documento') == 'factura':
+            if not datos.get('rut_factura') or not datos.get('razon_social'):
+                raise forms.ValidationError(
+                    'Para factura debes indicar RUT y razón social.')
         return datos
 
 

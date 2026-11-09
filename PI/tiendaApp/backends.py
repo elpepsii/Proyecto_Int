@@ -1,11 +1,7 @@
 """
-backends.py — Backend de autenticación por CORREO (RF-07).
-
 Django, por defecto, solo autentica por 'username'. Este backend permite
-entrar escribiendo el CORREO electrónico, que es como se registran los
-clientes. Django prueba los backends de AUTHENTICATION_BACKENDS en orden:
-el estándar (por username, para admin y demo) primero; si ninguno valida,
-prueba este: si lo escrito parece un correo, lo busca por email.
+entrar con el correo electrónico, que es como se registran los
+clientes.
 """
 
 from django.contrib.auth.backends import ModelBackend

@@ -81,7 +81,7 @@ WSGI_APPLICATION = 'Proyecto.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/6.1/ref/settings/#databases
-import pymysql
+"""import pymysql
 pymysql.install_as_MySQLdb()
 DATABASES = {
     'default': {
@@ -91,18 +91,19 @@ DATABASES = {
         'PASSWORD': 'inacap'
     }
 }
+"""
 
-# --- Para pasar a Supabase (PostgreSQL) cuando toque:
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'postgres',
-#         'USER': 'postgres',
-#         'PASSWORD': 'TU_CONTRASEÑA_SUPABASE',
-#         'HOST': 'db.TU-PROYECTO.supabase.co',
-#         'PORT': '5432',
-#     }
-# }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres.gbbcyqhspbsypukfugfz',
+        'PASSWORD': 'LopetsEVA03',
+        'HOST': 'aws-1-sa-east-1.pooler.supabase.com',
+        'PORT': '5432',
+        'OPTIONS': {'sslmode': 'require'},
+    }
+}
 
 
 # Password validation
