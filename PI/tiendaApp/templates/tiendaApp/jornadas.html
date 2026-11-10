@@ -1,16 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Jornadas laborales · PetShop{% endblock %}
+{% block title %}Jornadas laborales · Lopets{% endblock %}
 {% block contenido %}
 <h1>⏰ Jornadas laborales (RF-24)</h1>
 
-{# ---------------------- Control de la jornada actual ---------------------- #}
 <div class="card" style="max-width:620px">
     {% if jornada_activa %}
         <p><span class="badge b-verde">JORNADA ACTIVA</span>
            Inicio: {{ jornada_activa.inicio|date:"d/m/Y H:i" }}
            ({{ jornada_activa.duracion_minutos }} min hasta ahora)</p>
 
-        {# Resumen EN VIVO del turno #}
         <h2>Resumen del turno (en vivo)</h2>
         {% with r=resumen_activa %}
             <p>Ventas completadas: <strong>{{ r.cantidad }}</strong> ·
@@ -44,7 +42,6 @@
     {% endif %}
 </div>
 
-{# ---------------------------- Historial ---------------------------- #}
 <h2 style="margin-top:1.5rem">Historial de jornadas</h2>
 {% if jornadas %}
     <table>

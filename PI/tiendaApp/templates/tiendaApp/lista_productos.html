@@ -1,16 +1,12 @@
 {% extends "base.html" %}
-{% load static %}
 {% load humanize %}
-{% block title %}Catálogo · PetShop{% endblock %}
+{% block title %}Catálogo · Lopets{% endblock %}
 {% block contenido %}
 <h1>Catálogo de productos</h1>
 
-{# Un SOLO formulario GET envuelve todo el catálogo: así el select "Ordenar #}
-{# por" de la barra superior conserva también los filtros de la izquierda.  #}
 <form method="get">
 <div class="catalogo">
 
-    {# ================= COLUMNA IZQUIERDA: FILTROS (RF-02 + RF-03) ========= #}
     <aside class="col-filtros">
         <h3>Filtrar búsqueda</h3>
 
@@ -99,10 +95,8 @@
         <p><a href="{% url 'tiendaApp:lista_productos' %}">✕ Limpiar todos los filtros</a></p>
     </aside>
 
-    {# ================= COLUMNA DERECHA: RESULTADOS ======================== #}
     <section class="col-resultados">
 
-        {# ---- Barra horizontal "Ordenar por" (interfaz tradicional) ---- #}
         <div class="barra-orden">
             <span class="conteo"><strong>{{ page_obj.paginator.count }}</strong> producto(s){% if q %} para «{{ q }}»{% endif %}</span>
             <label for="id_orden">Ordenar por</label>
@@ -120,13 +114,7 @@
                 {% for producto in page_obj %}
                     <article class="prod-card">
                         <a class="prod-img-wrap" href="{% url 'tiendaApp:detalle_producto' producto.pk %}">
-                            {% if producto.imagen %}
-                                <img class="prod-img" src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
-                            {% else %}
-                                {% with 'img/fallback-producto.svg' as ruta_fallback %}
-                                    <img class="prod-img" src="{% static ruta_fallback %}" alt="{{ producto.nombre }}">
-                                {% endwith %}
-                            {% endif %}
+                            {% include 'tiendaApp/imagen_producto.html' with producto=producto only %}
                         </a>
                         <div class="prod-cuerpo">
                             <div class="prod-tags">

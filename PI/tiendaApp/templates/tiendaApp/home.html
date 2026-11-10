@@ -1,155 +1,99 @@
 {% extends "base.html" %}
 {% load static %}
-{% load humanize %}
-{% block title %}PetShop — Tienda de mascotas{% endblock %}
+{% block title %}Lopets — Tienda de mascotas{% endblock %}
+{% block atributos_body %} class="pagina-inicio"{% endblock %}
 {% block contenido %}
-
-{# ================= 1. CARRUSEL DE BANNERS (máx. 4) ================= #}
-{# Las imágenes están en static/img/banner-1.jpg ... banner-4.jpg.    #}
-{# Para cambiar un banner: reemplaza ese archivo (mismo nombre y      #}
-{# tamaño recomendado 1200x360) — no hay que tocar este HTML.         #}
-<section class="carrusel" aria-label="Promociones destacadas">
-    <div class="carrusel-slide activa"><img src="{% static 'img/banner-1.jpg' %}" alt="Ofertas de la semana"></div>
-    <div class="carrusel-slide"><img src="{% static 'img/banner-2.jpg' %}" alt="Alimento premium"></div>
-    <div class="carrusel-slide"><img src="{% static 'img/banner-3.jpg' %}" alt="Crea tu cuenta"></div>
-    <div class="carrusel-slide"><img src="{% static 'img/banner-4.jpg' %}" alt="Todo para tu mascota"></div>
-
-    <button class="carrusel-ant" type="button" aria-label="Banner anterior">‹</button>
-    <button class="carrusel-sig" type="button" aria-label="Banner siguiente">›</button>
-
-    <div class="carrusel-puntos">
-        <button class="punto activa" type="button" aria-label="Banner 1"></button>
-        <button class="punto" type="button" aria-label="Banner 2"></button>
-        <button class="punto" type="button" aria-label="Banner 3"></button>
-        <button class="punto" type="button" aria-label="Banner 4"></button>
+<section class="carrusel" aria-label="Banners de la tienda">
+    <div class="carrusel-escena">
+        <div class="carrusel-slide activa"><img src="{% static 'img/banner-1.jpg' %}" alt="Ofertas de la semana"></div>
+        <div class="carrusel-slide" aria-hidden="true"><img src="{% static 'img/banner-2.jpg' %}" alt="Alimento premium"></div>
+        <div class="carrusel-slide" aria-hidden="true"><img src="{% static 'img/banner-3.jpg' %}" alt="Crea tu cuenta"></div>
+        <div class="carrusel-slide" aria-hidden="true"><img src="{% static 'img/banner-4.jpg' %}" alt="Todo para tu mascota"></div>
+        <div class="carrusel-flechas" hidden>
+            <button class="carrusel-ant" type="button" aria-label="Banner anterior">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
+            </button>
+            <button class="carrusel-sig" type="button" aria-label="Banner siguiente">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>
+            </button>
+        </div>
+    </div>
+    <div class="carrusel-controles" hidden>
+        <div class="carrusel-puntos">
+            <button class="punto activa" type="button" aria-label="Banner 1" aria-current="true"></button>
+            <button class="punto" type="button" aria-label="Banner 2"></button>
+            <button class="punto" type="button" aria-label="Banner 3"></button>
+            <button class="punto" type="button" aria-label="Banner 4"></button>
+        </div>
+        <button class="carrusel-pausa" type="button" aria-label="Pausar rotación automática" aria-pressed="false">Ⅱ</button>
     </div>
 </section>
 
-{# ============ 2. CATEGORÍAS: accesos directos al catálogo ============ #}
-{# Cada tarjeta reutiliza los filtros GET de lista_productos, así la   #}
-{# búsqueda llega ya filtrada. ¿Quitar o agregar categorías? Copia un  #}
-{# <a class="cat-card"> y ajusta el enlace (?especie=...  ?tipo=...).  #}
-<section class="seccion-inicio">
-    <h2>¿Qué buscas para tu mascota?</h2>
-    <div class="grid-categorias">
-
-        <a class="cat-card" href="{% url 'tiendaApp:lista_productos' %}?especie=perro&tipo=alimento">
-            <span class="cat-icono">🐕</span>
-            <span class="cat-nombre">Alimento para perros</span>
-            <span class="cat-ver">Ver todo →</span>
+<section class="seccion-inicio portada-categorias" aria-labelledby="titulo-categorias">
+    <header>
+        <p class="rotulo">Explora por categoría</p>
+        <h2 id="titulo-categorias">¿Qué buscas para tu mascota?</h2>
+        <a class="btn azul" href="{% url 'tiendaApp:lista_productos' %}">Ver catálogo completo <span aria-hidden="true">→</span></a>
+    </header>
+    {% url 'tiendaApp:lista_productos' as catalogo %}
+    <div class="lista-categorias">
+        <a class="cat-card" href="{{ catalogo }}?especie=perro&amp;tipo=alimento">
+            <span class="cat-icono" aria-hidden="true">🐕</span>
+            <span class="cat-nombre">Alimento Perro</span>
+            <span class="cat-flecha" aria-hidden="true">→</span>
         </a>
-
-        <a class="cat-card" href="{% url 'tiendaApp:lista_productos' %}?especie=gato&tipo=alimento">
-            <span class="cat-icono">🐈</span>
-            <span class="cat-nombre">Alimento para gatos</span>
-            <span class="cat-ver">Ver todo →</span>
+        <a class="cat-card" href="{{ catalogo }}?especie=gato&amp;tipo=alimento">
+            <span class="cat-icono" aria-hidden="true">🐈</span>
+            <span class="cat-nombre">Alimento Gato</span>
+            <span class="cat-flecha" aria-hidden="true">→</span>
         </a>
-
-        <a class="cat-card" href="{% url 'tiendaApp:lista_productos' %}?especie=especial&tipo=alimento">
-            <span class="cat-icono">🐹</span>
-            <span class="cat-nombre">Alimento exóticos</span>
-            <span class="cat-ver">Ver todo →</span>
+        <a class="cat-card" href="{{ catalogo }}?especie=especial&amp;tipo=alimento">
+            <span class="cat-icono" aria-hidden="true">🐹</span>
+            <span class="cat-nombre">Alimento Exóticos</span>
+            <span class="cat-flecha" aria-hidden="true">→</span>
         </a>
-
-        <a class="cat-card" href="{% url 'tiendaApp:lista_productos' %}?tipo=higiene">
-            <span class="cat-icono">🧼</span>
-            <span class="cat-nombre">Arena e higiene</span>
-            <span class="cat-ver">Ver todo →</span>
+        <a class="cat-card" href="{{ catalogo }}?tipo=higiene">
+            <span class="cat-icono" aria-hidden="true">🧼</span>
+            <span class="cat-nombre">Arena e Higiene</span>
+            <span class="cat-flecha" aria-hidden="true">→</span>
         </a>
-
-        <a class="cat-card" href="{% url 'tiendaApp:lista_productos' %}?tipo=juguete">
-            <span class="cat-icono">🧸</span>
-            <span class="cat-nombre">Juguetes</span>
-            <span class="cat-ver">Ver todo →</span>
+        <a class="cat-card" href="{{ catalogo }}?tipo={{ tipo_juguetes_accesorios }}">
+            <span class="cat-icono" aria-hidden="true">🧸</span>
+            <span class="cat-nombre">Juguetes y Accesorios</span>
+            <span class="cat-flecha" aria-hidden="true">→</span>
         </a>
-
-        <a class="cat-card" href="{% url 'tiendaApp:lista_productos' %}?tipo=accesorio">
-            <span class="cat-icono">🦴</span>
-            <span class="cat-nombre">Accesorios</span>
-            <span class="cat-ver">Ver todo →</span>
-        </a>
-
     </div>
 </section>
 
-{# ================== 3. PRODUCTOS EN PROMOCIÓN ================== #}
-{# El admin marca 'Precio de oferta' en un producto y aparece aquí    #}
-{# (y en el catálogo, con el precio anterior tachado).                #}
-<section class="seccion-inicio">
-    <h2>🔥 En promoción</h2>
+<section class="seccion-inicio" aria-labelledby="titulo-promociones">
+    <p class="rotulo">Precios especiales</p>
+    <h2 id="titulo-promociones">En promoción</h2>
     {% if promociones %}
         <div class="grid-productos">
             {% for producto in promociones %}
-                <article class="prod-card prod-oferta">
-                    <a class="prod-img-wrap" href="{% url 'tiendaApp:detalle_producto' producto.pk %}">
-                        {% if producto.imagen %}
-                            <img class="prod-img" src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
-                        {% else %}
-                            {% with 'img/fallback-producto.svg' as ruta_fallback %}
-                                <img class="prod-img" src="{% static ruta_fallback %}" alt="{{ producto.nombre }}">
-                            {% endwith %}
-                        {% endif %}
-                        <span class="etiqueta-oferta">OFERTA</span>
-                    </a>
-                    <div class="prod-cuerpo">
-                        <div class="prod-tags">
-                            <span class="etiqueta">{{ producto.get_animal_display }}</span>
-                            <span class="etiqueta">{{ producto.get_tipo_producto_display }}</span>
-                        </div>
-                        <a class="prod-nombre" href="{% url 'tiendaApp:detalle_producto' producto.pk %}">{{ producto.nombre }}</a>
-                        <div class="prod-precio">
-                            <span class="precio-antes">${{ producto.precio|intcomma }}</span>
-                            <span class="precio-oferta">${{ producto.precio_oferta|intcomma }}</span>
-                            <small>IVA incluido</small>
-                        </div>
-                        <div class="prod-pie">
-                            <a class="btn mini azul" href="{% url 'tiendaApp:detalle_producto' producto.pk %}">Ver detalle</a>
-                        </div>
-                    </div>
-                </article>
+                {% include 'tiendaApp/tarjeta_portada.html' with producto=producto only %}
             {% endfor %}
         </div>
     {% else %}
-        <p class="vacio">Pronto aquí verás las ofertas. Tip: en el
-           <a href="/admin/">admin</a>, asigna "Precio de oferta" a un
-           producto y aparecerá en esta sección.</p>
+        <p class="portada-vacio">Por ahora no hay productos en promoción.
+            Puedes asignar un precio de oferta desde el <a href="{% url 'admin:index' %}">panel de administración</a>.
+        </p>
     {% endif %}
 </section>
 
-{# ===================== 4. PRODUCTOS DESTACADOS ===================== #}
-<section class="seccion-inicio">
-    <h2>Lo más destacado</h2>
+<section class="seccion-inicio" aria-labelledby="titulo-destacados">
+    <p class="rotulo">Selección Lopets</p>
+    <h2 id="titulo-destacados">Lo más destacado</h2>
     {% if destacados %}
         <div class="grid-productos">
             {% for producto in destacados %}
-                <article class="prod-card">
-                    <a class="prod-img-wrap" href="{% url 'tiendaApp:detalle_producto' producto.pk %}">
-                        {% if producto.imagen %}
-                            <img class="prod-img" src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
-                        {% else %}
-                            {% with 'img/fallback-producto.svg' as ruta_fallback %}
-                                <img class="prod-img" src="{% static ruta_fallback %}" alt="{{ producto.nombre }}">
-                            {% endwith %}
-                        {% endif %}
-                    </a>
-                    <div class="prod-cuerpo">
-                        <div class="prod-tags">
-                            <span class="etiqueta">{{ producto.get_animal_display }}</span>
-                            <span class="etiqueta">{{ producto.get_tipo_producto_display }}</span>
-                        </div>
-                        <a class="prod-nombre" href="{% url 'tiendaApp:detalle_producto' producto.pk %}">{{ producto.nombre }}</a>
-                        <div class="prod-precio">${{ producto.precio|intcomma }}
-                            <small>IVA incluido</small></div>
-                        <div class="prod-pie">
-                            <a class="btn mini azul" href="{% url 'tiendaApp:detalle_producto' producto.pk %}">Ver detalle</a>
-                        </div>
-                    </div>
-                </article>
+                {% include 'tiendaApp/tarjeta_portada.html' with producto=producto only %}
             {% endfor %}
         </div>
     {% else %}
-        <p class="vacio">Aún no hay productos. Crea algunos desde el
-           <a href="/admin/">Django admin</a> (Productos + su Stock).</p>
+        <p class="portada-vacio">Por ahora no hay productos destacados.
+            Puedes agregar productos desde el <a href="{% url 'admin:index' %}">panel de administración</a>.
+        </p>
     {% endif %}
 </section>
 

@@ -1,0 +1,4 @@
+{% load static %}
+<img class="{{ clase|default:'prod-img' }}"
+     src="{% if producto.imagen %}{{ producto.imagen.url }}{% else %}{% static 'img/fallback-producto.svg' %}{% endif %}"
+     alt="{{ producto.nombre }}">

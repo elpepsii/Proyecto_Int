@@ -1,0 +1,27 @@
+{% load humanize %}
+{% url 'tiendaApp:detalle_producto' producto.pk as detalle %}
+<article class="prod-card{% if producto.en_oferta %} prod-oferta{% endif %}">
+    <a class="prod-img-wrap" href="{{ detalle }}">
+        {% include 'tiendaApp/imagen_producto.html' with producto=producto only %}
+        {% if producto.en_oferta %}<span class="etiqueta-oferta">Oferta</span>{% endif %}
+    </a>
+    <div class="prod-cuerpo">
+        <div class="prod-tags">
+            <span class="etiqueta">{{ producto.get_animal_display }}</span>
+            <span class="etiqueta">{{ producto.get_tipo_producto_display }}</span>
+        </div>
+        <a class="prod-nombre" href="{{ detalle }}">{{ producto.nombre }}</a>
+        <div class="prod-precio">
+            {% if producto.en_oferta %}
+                <s class="precio-antes">${{ producto.precio|intcomma }}</s>
+                <span class="precio-oferta">${{ producto.precio_oferta|intcomma }}</span>
+            {% else %}
+                <span>${{ producto.precio|intcomma }}</span>
+            {% endif %}
+            <small>IVA incluido</small>
+        </div>
+        <div class="prod-pie">
+            <a class="btn mini azul" href="{{ detalle }}" aria-label="Ver detalle de {{ producto.nombre }}">Ver detalle</a>
+        </div>
+    </div>
+</article>

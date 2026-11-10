@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Crear cuenta · PetShop{% endblock %}
+{% block title %}Crear cuenta · Lopets{% endblock %}
 {% block contenido %}
 <h1>Crear cuenta de cliente</h1>
 <p>El registro es <strong>solo para clientes</strong> (RF-07): te sirve para
@@ -7,13 +7,10 @@
    Las cuentas de vendedor las crea el administrador.</p>
 
 <div class="card" style="max-width:640px">
-    {# novalidate: dejamos que Django valide (mensajes en español) #}
     <form method="post" novalidate>
         {% csrf_token %}
         {{ form.non_field_errors }}
 
-        {# Campos dibujados uno a uno: así controlamos el ORDEN y la grilla (.form-grid). #}
-        {# Nombre y Apellido quedan juntos en la misma fila; "completo" = fila entera. #}
         <div class="form-grid">
 
             <div class="campo">

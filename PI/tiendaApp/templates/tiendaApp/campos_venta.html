@@ -1,0 +1,28 @@
+{% for campo in form %}
+    {% if campo.name == 'rut_factura' %}
+        <div class="bloque-factura" id="bloque-factura">
+    {% endif %}
+    <p>
+        {{ campo.label_tag }}<br>
+        {{ campo }}
+        {% if campo.help_text %}<br><small style="color:#777">{{ campo.help_text }}</small>{% endif %}
+        {% for e in campo.errors %}<br><span class="b-rojo badge">{{ e }}</span>{% endfor %}
+    </p>
+    {% if campo.name == 'razon_social' %}
+        </div>
+    {% endif %}
+{% endfor %}
+
+<script>
+(function () {
+    const bloque = document.getElementById('bloque-factura');
+    const radios = document.querySelectorAll('input[name="tipo_documento"]');
+    if (!bloque || radios.length === 0) return;
+    function refrescar() {
+        const elegido = document.querySelector('input[name="tipo_documento"]:checked');
+        bloque.hidden = !elegido || elegido.value !== 'factura';
+    }
+    radios.forEach(r => r.addEventListener('change', refrescar));
+    refrescar();
+})();
+</script>

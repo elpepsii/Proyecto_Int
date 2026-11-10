@@ -1,10 +1,9 @@
 {% extends "base.html" %}
-{% block title %}Checkout · PetShop{% endblock %}
+{% block title %}Checkout · Lopets{% endblock %}
 {% block contenido %}
 <h1>Finalizar compra</h1>
 
 <div style="display:flex;gap:1.5rem;flex-wrap:wrap">
-    {# ------------- Resumen de lo que se está comprando ------------- #}
     <div style="flex:1;min-width:300px">
         <h2>Productos</h2>
         <table>
@@ -23,45 +22,14 @@
         </div>
     </div>
 
-    {# ------------- Formulario de entrega y documento ------------- #}
     <div class="card" style="flex:1;min-width:320px">
         <h2>Entrega y documento</h2>
         <form method="post">
             {% csrf_token %}
             {{ form.non_field_errors }}
-            {% for campo in form %}
-                {% if campo.name == 'rut_factura' %}
-                    {# ===== Datos de factura: solo con "Factura" elegido ===== #}
-                    <div class="bloque-factura" id="bloque-factura">
-                {% endif %}
-                <p>
-                    {{ campo.label_tag }}<br>
-                    {{ campo }}
-                    {% if campo.help_text %}<br><small style="color:#777">{{ campo.help_text }}</small>{% endif %}
-                    {% for e in campo.errors %}<br><span class="b-rojo badge">{{ e }}</span>{% endfor %}
-                </p>
-                {% if campo.name == 'razon_social' %}
-                    </div>
-                {% endif %}
-            {% endfor %}
+            {% include 'tiendaApp/campos_venta.html' with form=form only %}
             <button class="btn" type="submit">Ir a pagar con WebPay →</button>
         </form>
-        <script>
-        // Muestra el bloque de datos de factura SOLO cuando el documento
-        // elegido es "Factura". Con "Boleta" se oculta (los campos son
-        // opcionales en el servidor, así que no pasa nada si llegan vacíos).
-        (function () {
-            const bloque = document.getElementById('bloque-factura');
-            const radios = document.querySelectorAll('input[name="tipo_documento"]');
-            if (!bloque || radios.length === 0) return;
-            function refrescar() {
-                const elegido = document.querySelector('input[name="tipo_documento"]:checked');
-                bloque.hidden = !elegido || elegido.value !== 'factura';
-            }
-            radios.forEach(r => r.addEventListener('change', refrescar));
-            refrescar();
-        })();
-        </script>
         <p><small>Al continuar se creará tu pedido (PENDIENTE) y serás
            redirigido a Transbank <em>sandbox</em> para pagar con la tarjeta
            de prueba 4051 8856 0044 6623 · CVV 123.</small></p>

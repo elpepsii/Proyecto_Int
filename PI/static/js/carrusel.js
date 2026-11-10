@@ -1,52 +1,55 @@
-/* carrusel.js — Carrusel del home (vanilla JS, sin librerías).
-   Controla la clase .activa sobre los slides y los puntos; rota solo
-   cada 5 segundos y se detiene mientras el mouse está encima. */
 (function () {
-    'use strict';
+    const carrusel = document.querySelector('.carrusel');
+    if (!carrusel) return;
 
-    var carrusel = document.querySelector('.carrusel');
-    if (!carrusel) return;   // la página no tiene carrusel: no hace nada
-
-    var slides = carrusel.querySelectorAll('.carrusel-slide');
-    var puntos = carrusel.querySelectorAll('.punto');
-    var actual = 0;
-    var temporizador = null;
+    const slides = carrusel.querySelectorAll('.carrusel-slide');
+    const puntos = carrusel.querySelectorAll('.punto');
+    const pausa = carrusel.querySelector('.carrusel-pausa');
+    let actual = 0;
+    let temporizador;
 
     function mostrar(indice) {
-        // índice circular: del último slide vuelve al primero
         actual = (indice + slides.length) % slides.length;
-        slides.forEach(function (s, i) {
-            s.classList.toggle('activa', i === actual);
+        slides.forEach((slide, i) => {
+            slide.classList.toggle('activa', i === actual);
+            slide.setAttribute('aria-hidden', String(i !== actual));
         });
-        puntos.forEach(function (p, i) {
-            p.classList.toggle('activa', i === actual);
+        puntos.forEach((punto, i) => {
+            punto.classList.toggle('activa', i === actual);
+            if (i === actual) punto.setAttribute('aria-current', 'true');
+            else punto.removeAttribute('aria-current');
         });
     }
 
-    function automatico() {
+    function reiniciar() {
         clearInterval(temporizador);
-        temporizador = setInterval(function () { mostrar(actual + 1); }, 5000);
+        if (pausa.getAttribute('aria-pressed') === 'false') {
+            temporizador = setInterval(() => {
+                if (!carrusel.matches(':hover, :focus-within')) mostrar(actual + 1);
+            }, 5000);
+        }
     }
 
-    carrusel.querySelector('.carrusel-ant').addEventListener('click', function () {
-        mostrar(actual - 1);
-        automatico();          // reinicia la cuenta para no saltar rápido
-    });
-    carrusel.querySelector('.carrusel-sig').addEventListener('click', function () {
-        mostrar(actual + 1);
-        automatico();
-    });
-    puntos.forEach(function (p, i) {
-        p.addEventListener('click', function () {
-            mostrar(i);
-            automatico();
-        });
-    });
+    function irA(indice) {
+        mostrar(indice);
+        reiniciar();
+    }
 
-    // pausa cuando el usuario está mirando un banner
-    carrusel.addEventListener('mouseenter', function () { clearInterval(temporizador); });
-    carrusel.addEventListener('mouseleave', automatico);
+    function ajustarPausa(pausado) {
+        pausa.setAttribute('aria-pressed', String(pausado));
+        pausa.textContent = pausado ? '▶' : 'Ⅱ';
+        reiniciar();
+    }
 
-    mostrar(0);
-    automatico();
+    carrusel.querySelector('.carrusel-ant').addEventListener('click', () => irA(actual - 1));
+    carrusel.querySelector('.carrusel-sig').addEventListener('click', () => irA(actual + 1));
+    puntos.forEach((punto, i) => punto.addEventListener('click', () => irA(i)));
+    pausa.addEventListener('click', () => ajustarPausa(pausa.getAttribute('aria-pressed') === 'false'));
+
+    const movimientoReducido = window.matchMedia('(prefers-reduced-motion: reduce)');
+    movimientoReducido.addEventListener('change', evento => ajustarPausa(evento.matches));
+    ajustarPausa(movimientoReducido.matches);
+    carrusel.querySelectorAll('.carrusel-flechas, .carrusel-controles').forEach(grupo => {
+        grupo.hidden = false;
+    });
 })();

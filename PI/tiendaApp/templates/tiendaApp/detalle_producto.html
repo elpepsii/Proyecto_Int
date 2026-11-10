@@ -1,23 +1,14 @@
 {% extends "base.html" %}
-{% load static %}
 {% load humanize %}
-{% block title %}{{ producto.nombre }} · PetShop{% endblock %}
+{% block title %}{{ producto.nombre }} · Lopets{% endblock %}
 {% block contenido %}
 <a class="volver-atras" href="{% url 'tiendaApp:lista_productos' %}">← Volver al catálogo</a>
 
 <div class="detalle">
-    {# ---------------- Imagen del producto ---------------- #}
     <div>
-        {% if producto.imagen %}
-            <img class="prod-img-grande" src="{{ producto.imagen.url }}" alt="{{ producto.nombre }}">
-        {% else %}
-            {% with 'img/fallback-producto.svg' as ruta_fallback %}
-                <img class="prod-img-grande" src="{% static ruta_fallback %}" alt="{{ producto.nombre }}">
-            {% endwith %}
-        {% endif %}
+        {% include 'tiendaApp/imagen_producto.html' with producto=producto clase='prod-img-grande' only %}
     </div>
 
-    {# ---------------- Ficha del producto ---------------- #}
     <div class="card">
         <h1>{{ producto.nombre }}</h1>
         <p class="prod-tags">

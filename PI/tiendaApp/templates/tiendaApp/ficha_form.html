@@ -1,24 +1,48 @@
 {% extends "base.html" %}
-{% block title %}{% if ficha %}Editar ficha{% else %}Nueva ficha{% endif %} · PetShop{% endblock %}
+{% block title %}{% if ficha %}Editar ficha{% else %}Nueva ficha{% endif %} · Lopets{% endblock %}
 {% block contenido %}
-<h1>{% if ficha %}Editar ficha de {{ ficha.nombre }}{% else %}Nueva ficha de mascota{% endif %}</h1>
+<section class="pagina-ficha" aria-labelledby="titulo-ficha">
+    <a class="volver-atras" href="{% url 'tiendaApp:mis_fichas' %}">← Mis mascotas</a>
+    <header class="ficha-encabezado">
+        <p class="rotulo">Mis mascotas</p>
+        <h1 id="titulo-ficha">{% if ficha %}Editar ficha de {{ ficha.nombre }}{% else %}Nueva ficha de mascota{% endif %}</h1>
+        <p>Guarda sus datos y preferencias de alimentación en un solo lugar.</p>
+    </header>
 
-<div class="card" style="max-width:600px">
-    <form method="post">
+    <form class="card ficha-formulario" method="post">
         {% csrf_token %}
         {{ form.non_field_errors }}
-        {% for campo in form %}
-            <p>
-                {{ campo.label_tag }}<br>
-                {{ campo }}
-                {% if campo.help_text %}<br><small style="color:#777">{{ campo.help_text }}</small>{% endif %}
-                {% for e in campo.errors %}<br><span class="b-rojo badge">{{ e }}</span>{% endfor %}
-            </p>
-        {% endfor %}
+        <h2>Datos de tu mascota</h2>
+        <div class="ficha-datos">
+            {% include 'tiendaApp/campo_ficha.html' with campo=form.nombre only %}
+            {% include 'tiendaApp/campo_ficha.html' with campo=form.edad only %}
+            {% include 'tiendaApp/campo_ficha.html' with campo=form.especie only %}
+        </div>
+
+        <h2>Alimentación y cuidados</h2>
+        {% include 'tiendaApp/campo_ficha.html' with campo=form.tamano_grano_preferido only %}
+        <fieldset class="ficha-grupo">
+            {{ form.alergias.legend_tag }}
+            <div class="ficha-opciones">
+                {% for opcion in form.alergias %}
+                    {{ opcion }}
+                {% empty %}
+                    <p class="ficha-ayuda">Aún no hay alérgenos disponibles.</p>
+                {% endfor %}
+            </div>
+            {{ form.alergias.errors }}
+        </fieldset>
+        <fieldset class="ficha-grupo ficha-grupo-preferencias">
+            {{ form.favoritos.legend_tag }}
+            <p class="ficha-ayuda">Puedes marcar varias opciones en cada grupo.</p>
+            {{ form.favoritos }}
+            {{ form.favoritos.errors }}
+        </fieldset>
+
         <div class="acciones">
-            <button class="btn" type="submit">Guardar ficha</button>
+            <button class="btn azul" type="submit">Guardar ficha</button>
             <a class="btn gris" href="{% url 'tiendaApp:mis_fichas' %}">Cancelar</a>
         </div>
     </form>
-</div>
+</section>
 {% endblock %}

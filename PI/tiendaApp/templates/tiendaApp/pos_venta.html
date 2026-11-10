@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Venta POS · PetShop{% endblock %}
+{% block title %}Venta POS · Lopets{% endblock %}
 {% block contenido %}
 <h1>🧾 Registro de venta presencial (POS)</h1>
 <p>Marca la cantidad de cada producto (RF-18). Al registrar: se crea la
@@ -35,36 +35,8 @@
 
     <h2 style="margin-top:1rem">2. Cobro</h2>
     <div class="card" style="max-width:520px">
-        {% for campo in form %}
-            {% if campo.name == 'rut_factura' %}
-                {# ===== Datos de factura: solo con "Factura" elegido ===== #}
-                <div class="bloque-factura" id="bloque-factura">
-            {% endif %}
-            <p>
-                {{ campo.label_tag }}<br>
-                {{ campo }}
-                {% if campo.help_text %}<br><small style="color:#777">{{ campo.help_text }}</small>{% endif %}
-                {% for e in campo.errors %}<br><span class="b-rojo badge">{{ e }}</span>{% endfor %}
-            </p>
-            {% if campo.name == 'razon_social' %}
-                </div>
-            {% endif %}
-        {% endfor %}
+        {% include 'tiendaApp/campos_venta.html' with form=form only %}
         <button class="btn" type="submit">Registrar venta y cobrar</button>
     </div>
 </form>
-<script>
-// Muestra los datos de factura solo cuando el documento es "Factura".
-(function () {
-    const bloque = document.getElementById('bloque-factura');
-    const radios = document.querySelectorAll('input[name="tipo_documento"]');
-    if (!bloque || radios.length === 0) return;
-    function refrescar() {
-        const elegido = document.querySelector('input[name="tipo_documento"]:checked');
-        bloque.hidden = !elegido || elegido.value !== 'factura';
-    }
-    radios.forEach(r => r.addEventListener('change', refrescar));
-    refrescar();
-})();
-</script>
 {% endblock %}

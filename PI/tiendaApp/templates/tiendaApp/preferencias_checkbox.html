@@ -1,0 +1,14 @@
+<div class="ficha-preferencias"{% include 'django/forms/widgets/attrs.html' %}>
+    {% for grupo, opciones, indice in widget.optgroups %}
+        <fieldset class="ficha-grupo">
+            <legend>{{ grupo }}</legend>
+            <div class="ficha-opciones">
+                {% for opcion in opciones %}
+                    {% include opcion.template_name with widget=opcion %}
+                {% empty %}
+                    <p class="ficha-ayuda">Aún no hay opciones de este tipo.</p>
+                {% endfor %}
+            </div>
+        </fieldset>
+    {% endfor %}
+</div>
