@@ -1,46 +1,13 @@
 {% extends "base.html" %}
-{% block title %}Crear vendedor · Lopets{% endblock %}
+{% block title %}{% if vendedor %}Editar vendedor{% else %}Crear vendedor{% endif %} · Lopets{% endblock %}
 {% block contenido %}
-<h1>➕ Crear vendedor (RF-12)</h1>
-<p>Solo el <strong>administrador</strong> crea cuentas de vendedor: los
-   clientes se registran solos desde "Crear cuenta".</p>
-
-<div style="display:flex;gap:1.5rem;flex-wrap:wrap">
-    <div class="card" style="flex:1;min-width:300px;max-width:420px">
-        <h2>Nueva cuenta</h2>
-        <form method="post">
-            {% csrf_token %}
-            {{ form.non_field_errors }}
-            {% for campo in form %}
-                <p>
-                    {{ campo.label_tag }}<br>
-                    {{ campo }}
-                    {% if campo.help_text %}<br><small style="color:#777">{{ campo.help_text }}</small>{% endif %}
-                    {% for e in campo.errors %}<br><span class="b-rojo badge">{{ e }}</span>{% endfor %}
-                </p>
-            {% endfor %}
-            <button class="btn" type="submit">Crear vendedor</button>
-        </form>
+<a class="volver-atras" href="{% url 'tiendaApp:gestionar_vendedores' %}">← Gestionar vendedores</a>
+<h1>{% if vendedor %}Editar vendedor {{ vendedor.usuario_auth.username }}{% else %}Crear vendedor{% endif %}</h1>
+<form method="post" class="card formulario-gestion">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div class="acciones">
+        <button class="btn azul" type="submit">{% if vendedor %}Guardar cambios{% else %}Crear vendedor{% endif %}</button>
     </div>
-
-    <div style="flex:1;min-width:300px">
-        <h2>Vendedores actuales</h2>
-        {% if vendedores %}
-            <table>
-                <tr><th>Usuario</th><th>Nombre</th><th>Cargo</th><th>Horario</th><th>Teléfono</th></tr>
-                {% for vendedor in vendedores %}
-                    <tr>
-                        <td>{{ vendedor.usuario_auth.username }}</td>
-                        <td>{{ vendedor.usuario_auth.first_name }}</td>
-                        <td>{{ vendedor.cargo }}</td>
-                        <td>{{ vendedor.horario }}</td>
-                        <td>{{ vendedor.telefono }}</td>
-                    </tr>
-                {% endfor %}
-            </table>
-        {% else %}
-            <p class="vacio">Aún no hay vendedores.</p>
-        {% endif %}
-    </div>
-</div>
+</form>
 {% endblock %}

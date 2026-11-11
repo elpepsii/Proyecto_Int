@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Gestionar vendedores · Lopets{% endblock %}
+{% block contenido %}
+<a class="volver-atras" href="{% url 'tiendaApp:home' %}#panel-administrador">← Panel de administrador</a>
+<h1>Gestionar vendedores</h1>
+<a class="btn azul" href="{% url 'tiendaApp:crear_vendedor' %}">Crear vendedor</a>
+{% if vendedores %}
+    <div class="gestion-productos-tabla" role="region" aria-label="Vendedores" tabindex="0">
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col">Usuario</th>
+                    <th scope="col">Nombre</th>
+                    <th scope="col">Cargo</th>
+                    <th scope="col">Días laborales</th>
+                    <th scope="col">Sueldo</th>
+                    <th scope="col">Teléfono</th>
+                    <th scope="col">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for vendedor in vendedores %}
+                    <tr>
+                        <th scope="row">{{ vendedor.usuario_auth.username }}</th>
+                        <td>{{ vendedor.usuario_auth.get_full_name|default:"—" }}</td>
+                        <td>{{ vendedor.cargo }}</td>
+                        <td>{{ vendedor.horario }}</td>
+                        <td>${{ vendedor.sueldo|intcomma }}</td>
+                        <td>{{ vendedor.telefono|default:"—" }}</td>
+                        <td><a class="btn azul mini" href="{% url 'tiendaApp:editar_vendedor' vendedor.pk %}">Editar</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <p class="vacio">Aún no hay vendedores.</p>
+{% endif %}
+{% endblock %}

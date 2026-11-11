@@ -1,5 +1,8 @@
 from django.contrib import admin
+from django.core.exceptions import ValidationError
 from django.utils.html import format_html
+
+from .forms import ProveedorAdminForm, TelefonoField, VendedorAdminForm, VentaAdminForm
 
 from .models import (
     Administrador,
@@ -62,6 +65,7 @@ class ProductoAdmin(admin.ModelAdmin):
 
 @admin.register(Proveedor)
 class ProveedorAdmin(admin.ModelAdmin):
+    form = ProveedorAdminForm
     list_display = ('nombre', 'run_empresa', 'correo', 'fono')
     search_fields = ('nombre', 'run_empresa')
     filter_horizontal = ('productos',)
@@ -93,11 +97,37 @@ class ClienteAdmin(admin.ModelAdmin):
     list_display = ('usuario_auth', 'apellido', 'correo', 'telefono')
     search_fields = ('apellido', 'correo', 'usuario_auth__username')
 
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        if db_field.name == 'telefono':
+            return TelefonoField(required=False)
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
+
 
 @admin.register(Vendedor)
 class VendedorAdmin(admin.ModelAdmin):
+    form = VendedorAdminForm
     list_display = ('usuario_auth', 'cargo', 'horario', 'telefono', 'sueldo')
     search_fields = ('cargo', 'usuario_auth__username')
+
+    def get_exclude(self, request, obj=None):
+        return ('telefono',) if obj is None else super().get_exclude(request, obj)
+
+    def formfield_for_dbfield(self, db_field, request, **kwargs):
+        if db_field.name == 'telefono':
+            return TelefonoField(required=False)
+        return super().formfield_for_dbfield(db_field, request, **kwargs)
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            cliente = getattr(obj.usuario_auth, 'cliente_perfil', None)
+            telefono = getattr(cliente, 'telefono', None) or ''
+            if len(telefono) == 12 and telefono.startswith('+56'):
+                telefono = f'+56 {telefono[3:]}'
+            try:
+                obj.telefono = TelefonoField(required=False).clean(telefono)
+            except ValidationError:
+                obj.telefono = ''
+        super().save_model(request, obj, form, change)
 
 
 @admin.register(Administrador)
@@ -112,6 +142,7 @@ class DetalleVentaInline(admin.TabularInline):
 
 @admin.register(Venta)
 class VentaAdmin(admin.ModelAdmin):
+    form = VentaAdminForm
     list_display = ('id', 'origen', 'cliente', 'vendedor', 'total', 'estado', 'fecha_venta')
     list_filter = ('estado', 'origen', 'fecha_venta')
     search_fields = ('id', 'cliente__apellido', 'cliente__usuario_auth__username')

@@ -1,22 +1,27 @@
 from functools import wraps
 
 from django.contrib import messages
+from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import login
-from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User
+from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_http_methods, require_POST
 
 from . import carrito
 from .forms import (
     CheckoutForm,
+    EditarVendedorForm,
     FichaForm,
     PerfilForm,
     POSVentaForm,
+    ProveedorForm,
+    ProveedorProductoForm,
     RegistroForm,
     VendedorForm,
 )
@@ -31,6 +36,7 @@ from .models import (
     OrigenVenta,
     Pago,
     Producto,
+    Proveedor,
     Stock,
     TamanoGrano,
     Vendedor,
@@ -156,7 +162,64 @@ def detalle_producto(request, producto_id):
         {
             'producto': producto,
             'stock': getattr(producto, 'stock', None),
+            'tamanos_grano': (
+                TamanoGrano.choices if producto.tipo_producto == Producto.TipoProducto.ALIMENTO else ()
+            ),
         },
+    )
+
+
+@staff_member_required(login_url='login')
+@permission_required('tiendaApp.change_proveedor', raise_exception=True)
+@require_http_methods(['GET', 'POST'])
+def gestion_productos(request):
+    if request.method == 'POST':
+        form = ProveedorProductoForm(request.POST)
+        if form.is_valid() and 'proveedor' in request.POST:
+            proveedor = form.cleaned_data['proveedor']
+            with transaction.atomic():
+                producto = get_object_or_404(
+                    Producto.objects.select_for_update(), pk=form.cleaned_data['producto_id']
+                )
+                producto.proveedores.set([proveedor] if proveedor else [])
+            messages.success(request, f'Proveedor actualizado para {producto.nombre}.')
+        else:
+            messages.error(request, 'Elige un proveedor válido o selecciona «Sin proveedor».')
+        return redirect('tiendaApp:gestion_productos')
+
+    return render(
+        request,
+        'tiendaApp/gestion_productos.html',
+        {
+            'productos': Producto.objects.prefetch_related('proveedores'),
+            'proveedores': Proveedor.objects.all(),
+        },
+    )
+
+
+@staff_member_required(login_url='login')
+@permission_required('tiendaApp.change_proveedor', raise_exception=True)
+def gestionar_proveedores(request):
+    return render(
+        request, 'tiendaApp/gestionar_proveedores.html', {'proveedores': Proveedor.objects.all()}
+    )
+
+
+@staff_member_required(login_url='login')
+@permission_required('tiendaApp.change_proveedor', raise_exception=True)
+@require_http_methods(['GET', 'POST'])
+def editar_proveedor(request, proveedor_id=None):
+    if proveedor_id is None and not request.user.has_perm('tiendaApp.add_proveedor'):
+        raise PermissionDenied
+
+    proveedor = get_object_or_404(Proveedor, pk=proveedor_id) if proveedor_id is not None else None
+    form = ProveedorForm(request.POST if request.method == 'POST' else None, instance=proveedor)
+    if form.is_valid():
+        form.save()
+        messages.success(request, 'Proveedor guardado.')
+        return redirect('tiendaApp:gestionar_proveedores')
+    return render(
+        request, 'tiendaApp/formulario_proveedor.html', {'form': form, 'proveedor': proveedor}
     )
 
 
@@ -512,8 +575,9 @@ def pos_nueva_venta(request):
     if request.method == 'POST':
         form = POSVentaForm(request.POST)
         if not form.is_valid():
-            messages.error(request, 'Revisa los datos de la venta.')
-            return redirect('tiendaApp:pos_venta')
+            for producto in productos:
+                producto.cantidad_pos = request.POST.get(f'cant_{producto.pk}', 0)
+            return render(request, 'tiendaApp/pos_venta.html', {'form': form, 'productos': productos})
 
         lineas = []
         for producto in productos:
@@ -667,7 +731,7 @@ def jornadas(request):
     )
 
 
-@user_passes_test(lambda user: user.is_staff)
+@staff_member_required(login_url='login')
 def crear_vendedor(request):
     if request.method == 'POST':
         form = VendedorForm(request.POST)
@@ -675,24 +739,44 @@ def crear_vendedor(request):
             if User.objects.filter(username=form.cleaned_data['username']).exists():
                 form.add_error('username', 'Ese nombre de usuario ya existe.')
             else:
-                user = User.objects.create_user(
-                    username=form.cleaned_data['username'],
-                    first_name=form.cleaned_data['first_name'],
-                    password=form.cleaned_data['password'],
-                )
-                vendedor = form.save(commit=False)
-                vendedor.usuario_auth = user
-                vendedor.save()
+                with transaction.atomic():
+                    vendedor = form.save(commit=False)
+                    vendedor.usuario_auth = User.objects.create_user(
+                        username=form.cleaned_data['username'],
+                        first_name=form.cleaned_data['first_name'],
+                        last_name=form.cleaned_data['last_name'],
+                        password=form.cleaned_data['password'],
+                    )
+                    vendedor.save()
+                user = vendedor.usuario_auth
                 messages.success(request, f'Vendedor "{user.username}" creado con acceso al panel.')
-                return redirect('tiendaApp:crear_vendedor')
+                return redirect('tiendaApp:gestionar_vendedores')
     else:
         form = VendedorForm()
-    vendedores = Vendedor.objects.select_related('usuario_auth')
-    return render(
-        request,
-        'tiendaApp/crear_vendedor.html',
-        {
-            'form': form,
-            'vendedores': vendedores,
-        },
+    return render(request, 'tiendaApp/crear_vendedor.html', {'form': form})
+
+
+@staff_member_required(login_url='login')
+def gestionar_vendedores(request):
+    vendedores = Vendedor.objects.select_related('usuario_auth').order_by('usuario_auth__username')
+    return render(request, 'tiendaApp/gestionar_vendedores.html', {'vendedores': vendedores})
+
+
+@staff_member_required(login_url='login')
+def editar_vendedor(request, vendedor_id):
+    vendedor = get_object_or_404(Vendedor.objects.select_related('usuario_auth'), pk=vendedor_id)
+    usuario = vendedor.usuario_auth
+    form = EditarVendedorForm(
+        request.POST if request.method == 'POST' else None,
+        instance=vendedor,
+        initial={'first_name': usuario.first_name, 'last_name': usuario.last_name},
     )
+    if form.is_valid():
+        with transaction.atomic():
+            form.save()
+            usuario.first_name = form.cleaned_data['first_name']
+            usuario.last_name = form.cleaned_data['last_name']
+            usuario.save(update_fields=['first_name', 'last_name'])
+        messages.success(request, f'Vendedor "{usuario.username}" actualizado.')
+        return redirect('tiendaApp:gestionar_vendedores')
+    return render(request, 'tiendaApp/crear_vendedor.html', {'form': form, 'vendedor': vendedor})

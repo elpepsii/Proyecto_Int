@@ -20,7 +20,7 @@
     if (!bloque || radios.length === 0) return;
     function refrescar() {
         const elegido = document.querySelector('input[name="tipo_documento"]:checked');
-        bloque.hidden = !elegido || elegido.value !== 'factura';
+        bloque.hidden = !bloque.querySelector('.b-rojo') && (!elegido || elegido.value !== 'factura');
     }
     radios.forEach(r => r.addEventListener('change', refrescar));
     refrescar();

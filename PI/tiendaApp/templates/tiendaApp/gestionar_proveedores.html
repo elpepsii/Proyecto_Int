@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Gestionar proveedores · Lopets{% endblock %}
+{% block contenido %}
+<a class="volver-atras" href="{% url 'tiendaApp:gestion_productos' %}">← Productos y proveedores</a>
+<div class="gestion-cabecera">
+    <h1>Gestionar proveedores</h1>
+    {% if perms.tiendaApp.add_proveedor %}
+        <a class="btn azul" href="{% url 'tiendaApp:crear_proveedor' %}">Crear proveedor</a>
+    {% endif %}
+</div>
+{% if proveedores %}
+    <div class="gestion-productos-tabla" role="region" aria-label="Proveedores" tabindex="0">
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col">Nombre</th>
+                    <th scope="col">RUT</th>
+                    <th scope="col">Correo</th>
+                    <th scope="col">Teléfono</th>
+                    <th scope="col">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for proveedor in proveedores %}
+                    <tr>
+                        <th scope="row">{{ proveedor.nombre }}</th>
+                        <td>{{ proveedor.run_empresa|default:"—" }}</td>
+                        <td>{{ proveedor.correo }}</td>
+                        <td>{{ proveedor.fono }}</td>
+                        <td><a class="btn azul mini" href="{% url 'tiendaApp:editar_proveedor' proveedor.pk %}">Editar</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <p class="vacio">Aún no hay proveedores.</p>
+{% endif %}
+{% endblock %}

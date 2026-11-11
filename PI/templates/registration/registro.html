@@ -34,6 +34,7 @@
             <div class="campo">
                 {{ form.telefono.label_tag }}
                 {{ form.telefono }}
+                <small id="{{ form.telefono.auto_id }}_helptext">{{ form.telefono.help_text }}</small>
                 {{ form.telefono.errors }}
             </div>
 

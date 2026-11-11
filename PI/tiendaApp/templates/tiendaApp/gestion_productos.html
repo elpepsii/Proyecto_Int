@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}Gestión de productos · Lopets{% endblock %}
+{% block contenido %}
+<a class="volver-atras" href="{% url 'tiendaApp:home' %}#panel-administrador">← Panel de administrador</a>
+<div class="gestion-cabecera">
+    <h1>Gestión de productos</h1>
+    <a class="btn azul" href="{% url 'tiendaApp:gestionar_proveedores' %}">Gestionar proveedores</a>
+</div>
+<p>Elige un proveedor por producto o déjalo sin proveedor. Al guardar, se reemplaza la asignación actual.</p>
+
+{% if productos %}
+    <div class="gestion-productos-tabla" role="region" aria-label="Proveedores por producto" tabindex="0">
+        <table>
+            <thead>
+                <tr>
+                    <th scope="col">Producto</th>
+                    <th scope="col">Proveedor actual</th>
+                    <th scope="col">Asignación</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for producto in productos %}
+                    {% with asociados=producto.proveedores.all %}
+                        <tr>
+                            <th scope="row">
+                                {{ producto.nombre }}<br>
+                                <small>{{ producto.sku }}{% if not producto.activo %} · Inactivo{% endif %}</small>
+                            </th>
+                            <td>{{ asociados|join:", "|default:"Sin proveedor" }}</td>
+                            <td>
+                                <form method="post" class="gestion-productos-form">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="producto_id" value="{{ producto.pk }}">
+                                    <select name="proveedor" aria-label="Proveedor de {{ producto.nombre }}">
+                                        {% if asociados|length > 1 %}
+                                            <option value="elegir" selected>Elige una asignación</option>
+                                        {% endif %}
+                                        <option value="">Sin proveedor</option>
+                                        {% for proveedor in proveedores %}
+                                            <option value="{{ proveedor.pk }}"{% if asociados|length == 1 and asociados.0.pk == proveedor.pk %} selected{% endif %}>{{ proveedor.nombre }}{% if proveedor.run_empresa %} · {{ proveedor.run_empresa }}{% endif %}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn azul" aria-label="Guardar proveedor de {{ producto.nombre }}">Guardar</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endwith %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <p class="vacio">Aún no hay productos registrados.</p>
+{% endif %}
+{% endblock %}

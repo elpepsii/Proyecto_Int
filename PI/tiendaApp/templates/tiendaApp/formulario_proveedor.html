@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}{% if proveedor %}Editar proveedor{% else %}Crear proveedor{% endif %} · Lopets{% endblock %}
+{% block contenido %}
+<a class="volver-atras" href="{% url 'tiendaApp:gestionar_proveedores' %}">← Gestionar proveedores</a>
+<h1>{% if proveedor %}Editar proveedor{% else %}Crear proveedor{% endif %}</h1>
+<form method="post" class="card formulario-gestion">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div class="acciones">
+        <button class="btn azul" type="submit">{% if proveedor %}Guardar cambios{% else %}Crear proveedor{% endif %}</button>
+    </div>
+</form>
+{% endblock %}

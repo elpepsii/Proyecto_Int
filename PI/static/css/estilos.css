@@ -496,8 +496,93 @@ tr:last-child td { border-bottom: 0; }
 }
 .volver-atras { display: inline-block; margin-bottom: .8rem; font-size: .9rem; }
 
+.guia-grano {
+    margin: 1rem 0;
+    padding: clamp(.65rem, 2vw, 1rem);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    background: var(--celeste-50);
+}
+.guia-grano figcaption { display: grid; gap: .1rem; color: var(--azul-800); }
+.guia-grano-opciones {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .4rem;
+    margin: .75rem 0 0;
+    padding: 0;
+    list-style: none;
+}
+.guia-grano-opcion {
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    justify-items: center;
+    align-items: start;
+    gap: .4rem;
+    padding: .45rem .15rem;
+    border: 1px solid var(--borde);
+    border-radius: 9px;
+    background: var(--blanco);
+    text-align: center;
+    color: var(--azul-800);
+    font-size: .8rem;
+    line-height: 1.25;
+}
+.guia-grano-muestra {
+    display: grid;
+    place-items: center;
+    width: min(100%, 3.25rem);
+    height: 3.25rem;
+    border: 2px solid transparent;
+    border-radius: 50%;
+}
+.guia-grano-muestra::before {
+    content: "";
+    width: var(--grano);
+    height: var(--grano);
+    border-radius: 48% 52% 45% 55%;
+    background: radial-gradient(circle at 34% 24%, #c58b55, #95592f 54%, #633721 90%);
+    box-shadow: inset 0 -2px 3px #58311d66, 0 2px 4px #58311d44;
+}
+.guia-grano-opcion[data-tamano="pequeno"] { --grano: 1rem; }
+.guia-grano-opcion[data-tamano="mediano"] { --grano: 1.45rem; }
+.guia-grano-opcion[data-tamano="grande"] { --grano: 2rem; }
+.guia-grano-actual { background: var(--amarillo-100); border-color: #b98515; }
+.guia-grano-actual .guia-grano-muestra { border-color: #b98515; }
+.guia-grano-marca { color: var(--azul-900); font-weight: 750; }
+.guia-grano > small { display: block; margin-top: .55rem; }
+
+.gestion-productos-tabla { overflow-x: auto; }
+.gestion-productos-tabla th[scope="row"] { text-align: left; }
+.gestion-productos-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem;
+    align-items: center;
+}
+.gestion-productos-form select { width: 100%; max-width: 18rem; }
+
+.panel-administrador { margin-bottom: 1rem; }
+.panel-administrador h2 { margin-top: 0; text-align: center; }
+.panel-administrador .acciones { justify-content: center; margin-bottom: 0; }
+.gestion-cabecera { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem 1rem; }
+.gestion-cabecera .btn { margin-left: auto; }
+.formulario-gestion { max-width: 32rem; }
+.formulario-gestion :is(input:not([type="checkbox"]), select) { width: 100%; }
+.dias-laborales { display: flex; flex-wrap: wrap; gap: .45rem; margin: .4rem 0; }
+.dias-laborales label {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .3rem .55rem;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    cursor: pointer;
+}
+.dias-laborales label:has(:checked) { background: var(--celeste-100); }
+.dias-laborales input { margin: 0; accent-color: var(--azul-800); }
+
 form p, form li { margin: .45rem 0; }
-input[type=text], input[type=number], input[type=email],
+input[type=text], input[type=number], input[type=email], input[type=tel],
 input[type=password], input[type=date], select, textarea {
     padding: .45rem .6rem;
     border: 1px solid var(--borde);

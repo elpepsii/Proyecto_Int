@@ -3,6 +3,18 @@
 {% block title %}Lopets — Tienda de mascotas{% endblock %}
 {% block atributos_body %} class="pagina-inicio"{% endblock %}
 {% block contenido %}
+{% if user.is_active and user.is_staff %}
+    <section class="card panel-administrador" id="panel-administrador" aria-labelledby="titulo-administrador">
+        <h2 id="titulo-administrador">Panel de administrador</h2>
+        <div class="acciones">
+            <a class="btn azul" href="{% url 'tiendaApp:gestionar_vendedores' %}">Gestionar vendedores</a>
+            {% if perms.tiendaApp.change_proveedor %}
+                <a class="btn azul" href="{% url 'tiendaApp:gestion_productos' %}">Productos y proveedores</a>
+            {% endif %}
+        </div>
+    </section>
+{% endif %}
+
 <section class="carrusel" aria-label="Banners de la tienda">
     <div class="carrusel-escena">
         <div class="carrusel-slide activa"><img src="{% static 'img/banner-1.jpg' %}" alt="Ofertas de la semana"></div>

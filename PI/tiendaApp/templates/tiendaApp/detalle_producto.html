@@ -32,6 +32,29 @@
 
         {% if producto.descripcion %}<p>{{ producto.descripcion }}</p>{% endif %}
 
+        {% if tamanos_grano %}
+            <figure class="guia-grano">
+                <figcaption>
+                    <strong>Tamaño del grano</strong>
+                    <small>Comparación referencial</small>
+                </figcaption>
+                <ul class="guia-grano-opciones">
+                    {% for valor, etiqueta in tamanos_grano %}
+                        <li class="guia-grano-opcion{% if producto.tamano_grano == valor %} guia-grano-actual{% endif %}" data-tamano="{{ valor }}">
+                            <span class="guia-grano-muestra" aria-hidden="true"></span>
+                            <strong>{{ etiqueta }}</strong>
+                            {% if producto.tamano_grano == valor %}
+                                <small class="guia-grano-marca">✓ Este producto</small>
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+                {% if not producto.tamano_grano %}
+                    <small>Tamaño sin especificar para este producto.</small>
+                {% endif %}
+            </figure>
+        {% endif %}
+
         {% if producto.alergenos_contenidos.all %}
             <p><strong>⚠️ Contiene alérgenos:</strong>
                 {% for alergia in producto.alergenos_contenidos.all %}

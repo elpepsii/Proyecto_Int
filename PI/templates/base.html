@@ -57,7 +57,10 @@
                 <a href="{% url 'tiendaApp:jornadas' %}">Jornadas</a>
             {% endif %}
             {% if user.is_staff %}
-                <a href="{% url 'tiendaApp:crear_vendedor' %}">+ Vendedor</a>
+                {% if perms.tiendaApp.change_proveedor %}
+                    <a href="{% url 'tiendaApp:gestion_productos' %}">Gestión de productos</a>
+                {% endif %}
+                <a href="{% url 'tiendaApp:gestionar_vendedores' %}">Vendedores</a>
                 <a href="/admin/">Administración</a>
             {% endif %}
         {% endif %}
