@@ -1,0 +1,14 @@
+# Base
+Django>=5.2,<6.0
+psycopg[binary]>=3.2,<4.0
+python-dotenv>=1.0,<2.0
+
+# Imágenes en modelos (ImageField)
+Pillow>=10.4,<12.0
+
+# Servidor WSGI y estáticos para Vercel
+gunicorn>=23.0,<24.0
+whitenoise>=6.7,<7.0
+
+# Integración con Webpay (NUEVO)
+transbank-sdk>=6.1.0
