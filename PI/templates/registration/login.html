@@ -1,25 +1,23 @@
 {% extends "base.html" %}
 {% block title %}Iniciar sesión · Lopets{% endblock %}
+{% block atributos_body %} class="pagina-login"{% endblock %}
 {% block contenido %}
-<h1>Iniciar sesión</h1>
-<p>Los clientes entran con su <strong>correo electrónico</strong>. Vendedores
-   y administradores también pueden entrar con su usuario de siempre.</p>
+<section class="card login-tarjeta" aria-labelledby="titulo-login">
+    <header class="login-cabecera">
+        <h1 id="titulo-login">Iniciar sesión</h1>
+    </header>
 
-<div class="card" style="max-width:420px">
-    {% if form.errors %}
-        <p class="mensajes"><span class="error" style="display:block;padding:.5rem;border-radius:8px">
-            Correo/usuario o contraseña incorrectos. Inténtalo de nuevo.</span></p>
-    {% endif %}
+    <div class="login-contenido">
+        <form class="login-formulario" method="post">
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+            <div>{{ form.username.as_field_group }}</div>
+            <div>{{ form.password.as_field_group }}</div>
+            <input type="hidden" name="next" value="{{ next }}">
+            <button class="btn azul" type="submit">Entrar</button>
+        </form>
 
-    <form method="post">
-        {% csrf_token %}
-        <p>{{ form.username.label_tag }}<br>{{ form.username }}</p>
-        <p>{{ form.password.label_tag }}<br>{{ form.password }}</p>
-        <input type="hidden" name="next" value="{{ next }}">
-        <button class="btn" type="submit">Entrar</button>
-    </form>
-</div>
-
-<p style="margin-top:1rem">¿Aún no tienes cuenta? <a href="{% url 'tiendaApp:registro' %}">Regístrate como cliente</a>
-   (los vendedores los crea el administrador).</p>
+        <p class="login-registro">¿Aún no tienes cuenta? <a href="{% url 'tiendaApp:registro' %}">Regístrate</a></p>
+    </div>
+</section>
 {% endblock %}

@@ -15,12 +15,13 @@
     </section>
 {% endif %}
 
-<section class="carrusel" aria-label="Banners de la tienda">
+<section class="carrusel" id="banners" aria-label="Banners de la tienda">
     <div class="carrusel-escena">
-        <div class="carrusel-slide activa"><img src="{% static 'img/banner-1.jpg' %}" alt="Ofertas de la semana"></div>
-        <div class="carrusel-slide" aria-hidden="true"><img src="{% static 'img/banner-2.jpg' %}" alt="Alimento premium"></div>
-        <div class="carrusel-slide" aria-hidden="true"><img src="{% static 'img/banner-3.jpg' %}" alt="Crea tu cuenta"></div>
-        <div class="carrusel-slide" aria-hidden="true"><img src="{% static 'img/banner-4.jpg' %}" alt="Todo para tu mascota"></div>
+        {% for banner in banners %}
+            <div class="carrusel-slide{% if forloop.first %} activa{% endif %}" aria-hidden="{{ forloop.first|yesno:'false,true' }}">
+                <img src="{{ banner.url }}" alt="{{ banner.texto }}">
+            </div>
+        {% endfor %}
         <div class="carrusel-flechas" hidden>
             <button class="carrusel-ant" type="button" aria-label="Banner anterior">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 5-7 7 7 7"/></svg>
@@ -32,14 +33,41 @@
     </div>
     <div class="carrusel-controles" hidden>
         <div class="carrusel-puntos">
-            <button class="punto activa" type="button" aria-label="Banner 1" aria-current="true"></button>
-            <button class="punto" type="button" aria-label="Banner 2"></button>
-            <button class="punto" type="button" aria-label="Banner 3"></button>
-            <button class="punto" type="button" aria-label="Banner 4"></button>
+            {% for banner in banners %}
+                <button class="punto{% if forloop.first %} activa{% endif %}" type="button"
+                        aria-label="Banner {{ forloop.counter }}"{% if forloop.first %} aria-current="true"{% endif %}></button>
+            {% endfor %}
         </div>
         <button class="carrusel-pausa" type="button" aria-label="Pausar rotación automática" aria-pressed="false">Ⅱ</button>
     </div>
 </section>
+
+{% if formularios_banner %}
+    <section class="card editor-banners" id="editar-banners" aria-labelledby="titulo-editor-banners">
+        <h2 id="titulo-editor-banners">Editar banners</h2>
+        <p>Elige las imágenes que quieras reemplazar. Usa JPG, PNG o WebP de hasta 5 MB. Para evitar recortes, usa una proporción de 10:3.</p>
+        {% if error_guardado_banners %}<p class="errorlist" role="alert">{{ error_guardado_banners }}</p>{% endif %}
+        <form method="post" enctype="multipart/form-data" action="{% url 'tiendaApp:editar_banners' %}#editar-banners">
+            {% csrf_token %}
+            <div class="grid editor-banners-campos">
+                {% for formulario in formularios_banner %}
+                    <fieldset>
+                        <legend>Banner {{ forloop.counter }}</legend>
+                        {{ formulario.as_p }}
+                    </fieldset>
+                {% endfor %}
+            </div>
+            <div class="acciones">
+                <button class="btn azul" type="submit">Guardar banners</button>
+                <a class="btn secundario" href="{% url 'tiendaApp:home' %}#banners">Cancelar</a>
+            </div>
+        </form>
+    </section>
+{% elif puede_editar_banners %}
+    <div class="acciones">
+        <a class="btn azul" href="{% url 'tiendaApp:editar_banners' %}#editar-banners">Editar banners</a>
+    </div>
+{% endif %}
 
 <section class="seccion-inicio portada-categorias" aria-labelledby="titulo-categorias">
     <header>

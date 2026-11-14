@@ -14,9 +14,14 @@
         <p class="prod-tags">
             <span class="etiqueta">{{ producto.get_animal_display }}</span>
             <span class="etiqueta">{{ producto.get_tipo_producto_display }}</span>
+            {% if producto.tipo_alimento %}
+                <span class="etiqueta">{{ producto.get_tipo_alimento_display }}</span>
+            {% endif %}
             <span class="etiqueta">{{ producto.get_edad_producto_display }}</span>
             <span class="etiqueta">{{ producto.get_tamano_raza_display }}</span>
-            {% if producto.tamano_grano %}<span class="etiqueta">{{ producto.get_tamano_grano_display }}</span>{% endif %}
+            {% if tamanos_grano and producto.tamano_grano %}
+                <span class="etiqueta">{{ producto.get_tamano_grano_display }}</span>
+            {% endif %}
         </p>
 
         {% if producto.en_oferta %}

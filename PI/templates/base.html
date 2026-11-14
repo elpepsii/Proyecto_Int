@@ -5,7 +5,7 @@
     <meta charset="utf-8">
     <title>{% block title %}Lopets — Todo para tu mascota{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+    <link rel="stylesheet" href="{% static 'css/estilos.css' %}?v=cuenta">
 </head>
 <body{% block atributos_body %}{% endblock %}>
     <div class="barra-top">🐾 Despacho a domicilio · Precios con IVA incluido · Pago seguro con WebPay</div>
@@ -23,7 +23,7 @@
                 <path d="m16 16 4 4"/>
             </svg>
             <input type="search" name="q" value="{{ request.GET.q|default:'' }}"
-                   placeholder="Buscar productos o marcas…" aria-label="Buscar productos o marcas">
+                   placeholder="Buscar productos o SKU…" aria-label="Buscar productos por nombre o SKU">
             <button type="submit">Buscar</button>
         </form>
 
@@ -50,11 +50,13 @@
                 <a href="{% url 'tiendaApp:perfil' %}">Mi perfil</a>
             {% endif %}
             {% if user.vendedor_perfil %}
-                <a href="{% url 'tiendaApp:panel_vendedor' %}">Panel vendedor</a>
-                <a href="{% url 'tiendaApp:pos_venta' %}">Venta POS</a>
-                <a href="{% url 'tiendaApp:ventas_lista' %}">Ventas</a>
-                <a href="{% url 'tiendaApp:entregas' %}">Entregas</a>
-                <a href="{% url 'tiendaApp:jornadas' %}">Jornadas</a>
+                {% with vista=request.resolver_match.url_name %}
+                    <a href="{% url 'tiendaApp:panel_vendedor' %}"{% if vista == 'panel_vendedor' %} aria-current="page"{% endif %}>Panel de vendedor</a>
+                    <a href="{% url 'tiendaApp:pos_venta' %}"{% if vista == 'pos_venta' %} aria-current="page"{% endif %}>Venta presencial</a>
+                    <a href="{% url 'tiendaApp:ventas_lista' %}"{% if vista == 'ventas_lista' %} aria-current="page"{% endif %}>Ventas</a>
+                    <a href="{% url 'tiendaApp:entregas' %}"{% if vista == 'entregas' %} aria-current="page"{% endif %}>Entregas</a>
+                    <a href="{% url 'tiendaApp:jornadas' %}"{% if vista == 'jornadas' %} aria-current="page"{% endif %}>Jornadas</a>
+                {% endwith %}
             {% endif %}
             {% if user.is_staff %}
                 {% if perms.tiendaApp.change_proveedor %}

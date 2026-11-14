@@ -6,9 +6,11 @@ app_name = 'tiendaApp'
 
 urlpatterns = [
     path('', views.home, name='home'),
+    path('gestion/banners/', views.editar_banners, name='editar_banners'),
     path('productos/', views.lista_productos, name='lista_productos'),
     path('productos/<int:producto_id>/', views.detalle_producto, name='detalle_producto'),
     path('gestion/productos/', views.gestion_productos, name='gestion_productos'),
+    path('gestion/productos/<int:producto_id>/solicitar-stock/', views.solicitar_stock, name='solicitar_stock'),
     path('gestion/proveedores/', views.gestionar_proveedores, name='gestionar_proveedores'),
     path('gestion/proveedores/nuevo/', views.editar_proveedor, name='crear_proveedor'),
     path('gestion/proveedores/<int:proveedor_id>/editar/', views.editar_proveedor, name='editar_proveedor'),

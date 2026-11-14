@@ -4,20 +4,33 @@
 {% block contenido %}
 <h1>Catálogo de productos</h1>
 
-<form method="get">
 <div class="catalogo">
+    <form class="barra-orden" id="filtros-catalogo" method="get" action="{% url 'tiendaApp:lista_productos' %}">
+        <p class="conteo"><strong>{{ page_obj.paginator.count }}</strong> producto{{ page_obj.paginator.count|pluralize }}{% if q %} para «{{ q }}»{% endif %}</p>
+        <div>
+            <label for="id_q">Buscar por nombre o SKU</label>
+            <div class="busqueda-catalogo">
+                <input type="search" id="id_q" name="q" value="{{ q }}" placeholder="Ej. alimento para gato">
+                <button class="btn azul" type="submit">Buscar</button>
+            </div>
+        </div>
+        <div>
+            <label for="id_orden">Ordenar por</label>
+            <select id="id_orden" name="orden" onchange="this.form.requestSubmit()">
+                <option value="nombre" {% if orden_actual == 'nombre' %}selected{% endif %}>Nombre (A–Z)</option>
+                <option value="precio_asc" {% if orden_actual == 'precio_asc' %}selected{% endif %}>Precio: menor a mayor</option>
+                <option value="precio_desc" {% if orden_actual == 'precio_desc' %}selected{% endif %}>Precio: mayor a menor</option>
+            </select>
+            <noscript><button class="btn mini azul" type="submit">Ordenar</button></noscript>
+        </div>
+    </form>
 
     <aside class="col-filtros">
-        <h3>Filtrar búsqueda</h3>
-
-        <div class="filtro-grupo">
-            <label for="id_q">Buscar (nombre o SKU)</label>
-            <input type="text" id="id_q" name="q" value="{{ q }}" placeholder="ej: alimento">
-        </div>
+        <h3>Filtros</h3>
 
         <div class="filtro-grupo">
             <label for="id_especie">Especie</label>
-            <select id="id_especie" name="especie">
+            <select id="id_especie" name="especie" form="filtros-catalogo">
                 <option value="">Todas las especies</option>
                 {% for valor, nombre in especies %}
                     <option value="{{ valor }}" {% if valor == especie_actual %}selected{% endif %}>{{ nombre }}</option>
@@ -27,7 +40,7 @@
 
         <div class="filtro-grupo">
             <label for="id_tipo">Tipo de producto</label>
-            <select id="id_tipo" name="tipo">
+            <select id="id_tipo" name="tipo" form="filtros-catalogo">
                 <option value="">Todos los tipos</option>
                 {% for valor, nombre in tipos %}
                     <option value="{{ valor }}" {% if valor == tipo_actual %}selected{% endif %}>{{ nombre }}</option>
@@ -36,8 +49,18 @@
         </div>
 
         <div class="filtro-grupo">
+            <label for="id_tipo_alimento">Tipo de alimento</label>
+            <select id="id_tipo_alimento" name="tipo_alimento" form="filtros-catalogo">
+                <option value="">Cualquiera</option>
+                {% for valor, nombre in tipos_alimento %}
+                    <option value="{{ valor }}" {% if valor == tipo_alimento_actual %}selected{% endif %}>{{ nombre }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filtro-grupo">
             <label for="id_edad">Etapa de vida</label>
-            <select id="id_edad" name="edad">
+            <select id="id_edad" name="edad" form="filtros-catalogo">
                 <option value="">Todas las etapas</option>
                 {% for valor, nombre in edades %}
                     <option value="{{ valor }}" {% if valor == edad_actual %}selected{% endif %}>{{ nombre }}</option>
@@ -47,7 +70,7 @@
 
         <div class="filtro-grupo">
             <label for="id_raza">Tamaño de raza</label>
-            <select id="id_raza" name="tamano_raza">
+            <select id="id_raza" name="tamano_raza" form="filtros-catalogo">
                 <option value="">Todos los tamaños</option>
                 {% for valor, nombre in razas %}
                     <option value="{{ valor }}" {% if valor == raza_actual %}selected{% endif %}>{{ nombre }}</option>
@@ -57,7 +80,7 @@
 
         <div class="filtro-grupo">
             <label for="id_grano">Tamaño de grano (alimentos)</label>
-            <select id="id_grano" name="tamano_grano">
+            <select id="id_grano" name="tamano_grano" form="filtros-catalogo">
                 <option value="">Cualquiera</option>
                 {% for valor, nombre in granos %}
                     <option value="{{ valor }}" {% if valor == grano_actual %}selected{% endif %}>{{ nombre }}</option>
@@ -68,16 +91,18 @@
         <div class="filtro-grupo">
             <label>Precio (CLP)</label>
             <div class="filtro-rango">
-                <input type="number" name="precio_min" value="{{ precio_min }}" min="0" placeholder="mín." aria-label="Precio mínimo">
+                <input type="number" name="precio_min" value="{{ precio_min }}" min="0"
+                       placeholder="mín." aria-label="Precio mínimo" form="filtros-catalogo">
                 <span>–</span>
-                <input type="number" name="precio_max" value="{{ precio_max }}" min="0" placeholder="máx." aria-label="Precio máximo">
+                <input type="number" name="precio_max" value="{{ precio_max }}" min="0"
+                       placeholder="máx." aria-label="Precio máximo" form="filtros-catalogo">
             </div>
         </div>
 
         {% if fichas_cliente %}
             <div class="filtro-grupo">
                 <label for="id_ficha">Compatible con mi mascota</label>
-                <select id="id_ficha" name="ficha">
+                <select id="id_ficha" name="ficha" form="filtros-catalogo">
                     <option value="">— elegir mascota —</option>
                     {% for ficha in fichas_cliente %}
                         <option value="{{ ficha.pk }}" {% if ficha_seleccionada and ficha.pk == ficha_seleccionada.pk %}selected{% endif %}>
@@ -85,30 +110,17 @@
                     {% endfor %}
                 </select>
             </div>
-            <p class="nota-ficha">Excluye los alérgenos de la ficha y prefiere su
-               tamaño de grano (RF-08). <a href="{% url 'tiendaApp:crear_ficha' %}">Crear ficha</a></p>
+            <p class="nota-ficha">Filtra por especie, alergias, tamaño de grano y preferencia de alimento seco o húmedo.
+               <a href="{% url 'tiendaApp:crear_ficha' %}">Crear ficha</a></p>
         {% endif %}
 
-        <div class="acciones" style="margin-top:.8rem">
-            <button class="btn azul" type="submit" style="flex:1">Aplicar filtros</button>
+        <div class="acciones">
+            <button class="btn azul" type="submit" form="filtros-catalogo">Aplicar filtros</button>
         </div>
         <p><a href="{% url 'tiendaApp:lista_productos' %}">✕ Limpiar todos los filtros</a></p>
     </aside>
 
     <section class="col-resultados">
-
-        <div class="barra-orden">
-            <span class="conteo"><strong>{{ page_obj.paginator.count }}</strong> producto(s){% if q %} para «{{ q }}»{% endif %}</span>
-            <label for="id_orden">Ordenar por</label>
-            <select id="id_orden" name="orden" onchange="this.form.submit()">
-                <option value="nombre" {% if orden_actual == 'nombre' %}selected{% endif %}>Nombre (A–Z)</option>
-                <option value="precio_asc" {% if orden_actual == 'precio_asc' %}selected{% endif %}>Precio: menor a mayor</option>
-                <option value="precio_desc" {% if orden_actual == 'precio_desc' %}selected{% endif %}>Precio: mayor a menor</option>
-            </select>
-            <noscript><button class="btn mini" type="submit">Ordenar</button></noscript>
-            <a class="limpiar" href="{% url 'tiendaApp:lista_productos' %}">Ver todo</a>
-        </div>
-
         {% if page_obj.object_list %}
             <div class="grid-productos">
                 {% for producto in page_obj %}
@@ -120,6 +132,9 @@
                             <div class="prod-tags">
                                 <span class="etiqueta">{{ producto.get_animal_display }}</span>
                                 <span class="etiqueta">{{ producto.get_tipo_producto_display }}</span>
+                                {% if producto.tipo_alimento %}
+                                    <span class="etiqueta">{{ producto.get_tipo_alimento_display }}</span>
+                                {% endif %}
                             </div>
                             <a class="prod-nombre" href="{% url 'tiendaApp:detalle_producto' producto.pk %}">{{ producto.nombre }}</a>
                             {% if producto.en_oferta %}
@@ -156,11 +171,11 @@
             {% if page_obj.has_other_pages %}
                 <div class="paginacion">
                     {% if page_obj.has_previous %}
-                        <a class="btn mini gris" href="?{{ querystring }}&page={{ page_obj.previous_page_number }}">« Anterior</a>
+                        <a class="btn mini gris" href="?{% if querystring %}{{ querystring }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">« Anterior</a>
                     {% endif %}
                     <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
                     {% if page_obj.has_next %}
-                        <a class="btn mini gris" href="?{{ querystring }}&page={{ page_obj.next_page_number }}">Siguiente »</a>
+                        <a class="btn mini gris" href="?{% if querystring %}{{ querystring }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Siguiente »</a>
                     {% endif %}
                 </div>
             {% endif %}
@@ -170,5 +185,4 @@
         {% endif %}
     </section>
 </div>
-</form>
 {% endblock %}

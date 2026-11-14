@@ -6,12 +6,81 @@ from django.contrib.auth.models import User
 from django.db.models import Value
 from django.db.models.functions import Replace
 
-from .models import Cliente, Entrega, Ficha, MedioPago, Preferencia, Proveedor, Vendedor, Venta
+from .models import (
+    Banner,
+    Cliente,
+    Entrega,
+    Ficha,
+    MedioPago,
+    Preferencia,
+    Producto,
+    Proveedor,
+    Vendedor,
+    Venta,
+)
+
+
+class BannerForm(forms.ModelForm):
+    class Meta:
+        model = Banner
+        fields = ('imagen', 'texto_alternativo')
+        labels = {'imagen': 'Nueva imagen', 'texto_alternativo': 'Texto alternativo'}
+        widgets = {'imagen': forms.FileInput(attrs={'accept': 'image/jpeg,image/png,image/webp'})}
+
+    def clean_imagen(self):
+        imagen = self.cleaned_data['imagen']
+        if 'imagen' not in self.changed_data:
+            return imagen
+        if imagen.image.format not in {'JPEG', 'PNG', 'WEBP'}:
+            raise forms.ValidationError('Usa una imagen JPG, PNG o WebP.')
+        if imagen.size > 5 * 1024 * 1024:
+            raise forms.ValidationError('La imagen puede pesar hasta 5 MB.')
+        return imagen
+
+
+class ProductoAdminForm(forms.ModelForm):
+    class Meta:
+        model = Producto
+        fields = '__all__'
+
+    def clean(self):
+        datos = super().clean()
+        if datos.get('tipo_producto') != Producto.TipoProducto.ALIMENTO:
+            if 'tipo_alimento' in datos:
+                datos['tipo_alimento'] = ''
+        elif datos.get('tipo_alimento') == '':
+            self.add_error('tipo_alimento', 'Indica si el alimento es seco o húmedo.')
+        return datos
+
+
+class PreferenciaAdminForm(forms.ModelForm):
+    class Meta:
+        model = Preferencia
+        fields = '__all__'
+
+    def clean(self):
+        datos = super().clean()
+        if datos.get('categoria') != Preferencia.Categoria.TIPO_ALIMENTO and 'tipo_alimento' in datos:
+            datos['tipo_alimento'] = ''
+        return datos
 
 
 class ProveedorProductoForm(forms.Form):
     producto_id = forms.IntegerField(min_value=1)
     proveedor = forms.ModelChoiceField(queryset=Proveedor.objects.all(), required=False)
+
+
+class SolicitudStockForm(forms.Form):
+    proveedor = forms.ModelChoiceField(queryset=Proveedor.objects.none())
+    cantidad = forms.IntegerField(label='Unidades a agregar', min_value=1)
+
+    def __init__(self, *args, proveedores, **kwargs):
+        super().__init__(*args, **kwargs)
+        campo = self.fields['proveedor']
+        campo.queryset = proveedores
+        if len(proveedores) == 1:
+            campo.initial = proveedores[0].pk
+            campo.widget = forms.HiddenInput()
 
 
 class FichaForm(forms.ModelForm):
@@ -165,7 +234,7 @@ class RegistroForm(UserCreationForm):
 class EntrarForm(AuthenticationForm):
     error_messages = {
         'invalid_login': 'No encontramos una cuenta con esos datos. '
-        'Revisa tu correo y contraseña e inténtalo de nuevo.',
+        'Revisa tu correo electrónico o usuario y tu contraseña.',
         'inactive': 'Esta cuenta está desactivada.',
     }
 

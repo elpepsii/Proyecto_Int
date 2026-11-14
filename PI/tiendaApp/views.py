@@ -7,14 +7,19 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
-from django.db import transaction
-from django.db.models import Q
+from django.db import connection, transaction
+from django.db.models import F, Q
+from django.db.models.functions import Coalesce
+from django.templatetags.static import static
+from django.urls import reverse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
 
 from . import carrito
+from .almacenamiento import ErrorAlmacenamiento
 from .forms import (
+    BannerForm,
     CheckoutForm,
     EditarVendedorForm,
     FichaForm,
@@ -23,9 +28,12 @@ from .forms import (
     ProveedorForm,
     ProveedorProductoForm,
     RegistroForm,
+    SolicitudStockForm,
     VendedorForm,
 )
 from .models import (
+    BANNERS_PREDETERMINADOS,
+    Banner,
     Cliente,
     Entrega,
     Especie,
@@ -35,10 +43,12 @@ from .models import (
     JornadaLaboral,
     OrigenVenta,
     Pago,
+    Preferencia,
     Producto,
     Proveedor,
     Stock,
     TamanoGrano,
+    TipoAlimento,
     Vendedor,
     Venta,
 )
@@ -46,19 +56,79 @@ from .models import (
 TIPO_JUGUETES_ACCESORIOS = 'juguetes-accesorios'
 
 
-def home(request):
+def _puede_editar_banners(user):
+    return user.is_active and (user.is_superuser or hasattr(user, 'admin_perfil'))
+
+
+def _portada(request, *, editar=False):
     productos = Producto.objects.filter(activo=True)
-    promociones = productos.filter(precio_oferta__isnull=False)[:4]
-    destacados = productos[:8]
+    guardados = Banner.objects.in_bulk()
+    banners = [
+        guardados.get(posicion) or Banner(posicion=posicion, texto_alternativo=texto)
+        for posicion, texto in enumerate(BANNERS_PREDETERMINADOS, 1)
+    ]
+    imagenes = [
+        {
+            'url': banner.imagen.url if banner.imagen else static(f'img/banner-{banner.posicion}.jpg'),
+            'texto': banner.texto_alternativo,
+        }
+        for banner in banners
+    ]
+    formularios = []
+    error_guardado = ''
+    if editar:
+        datos = (request.POST, request.FILES) if request.method == 'POST' else ()
+        formularios = [
+            BannerForm(*datos, instance=banner, prefix=f'banner-{banner.posicion}')
+            for banner in banners
+        ]
+        if request.method == 'POST' and all([formulario.is_valid() for formulario in formularios]):
+            try:
+                with transaction.atomic():
+                    for formulario in formularios:
+                        cambios = {
+                            campo: formulario.cleaned_data[campo]
+                            for campo in formulario.changed_data
+                        }
+                        if cambios:
+                            Banner.objects.update_or_create(
+                                posicion=formulario.instance.posicion,
+                                defaults=cambios,
+                                create_defaults={
+                                    'texto_alternativo': formulario.cleaned_data['texto_alternativo'],
+                                    **cambios,
+                                },
+                            )
+            except ErrorAlmacenamiento as error:
+                error_guardado = str(error)
+            else:
+                messages.success(request, 'Banners actualizados.')
+                return redirect(reverse('tiendaApp:home') + '#banners')
+
     return render(
         request,
         'tiendaApp/home.html',
         {
-            'destacados': destacados,
-            'promociones': promociones,
+            'destacados': productos[:8],
+            'promociones': productos.filter(precio_oferta__isnull=False)[:4],
             'tipo_juguetes_accesorios': TIPO_JUGUETES_ACCESORIOS,
+            'banners': imagenes,
+            'puede_editar_banners': _puede_editar_banners(request.user),
+            'formularios_banner': formularios,
+            'error_guardado_banners': error_guardado,
         },
     )
+
+
+def home(request):
+    return _portada(request)
+
+
+@require_http_methods(['GET', 'POST'])
+def editar_banners(request):
+    if not _puede_editar_banners(request.user):
+        raise PermissionDenied
+    return _portada(request, editar=True)
 
 
 def lista_productos(request):
@@ -67,6 +137,7 @@ def lista_productos(request):
     q = request.GET.get('q', '').strip()
     especie = request.GET.get('especie', '')
     tipo = request.GET.get('tipo', '')
+    tipo_alimento = request.GET.get('tipo_alimento', '')
     edad = request.GET.get('edad', '')
     tamano_raza = request.GET.get('tamano_raza', '')
     tamano_grano = request.GET.get('tamano_grano', '')
@@ -91,6 +162,11 @@ def lista_productos(request):
     elif tipo:
         productos = productos.filter(tipo_producto=tipo)
 
+    if tipo_alimento in TipoAlimento.values:
+        productos = productos.filter(
+            tipo_producto=Producto.TipoProducto.ALIMENTO, tipo_alimento=tipo_alimento
+        )
+
     if precio_min.isdigit():
         productos = productos.filter(precio__gte=int(precio_min))
     if precio_max.isdigit():
@@ -108,13 +184,22 @@ def lista_productos(request):
                 Q(tamano_grano=ficha.tamano_grano_preferido) | Q(tamano_grano__isnull=True)
             )
         productos = productos.exclude(alergenos_contenidos__in=ficha.alergias.all())
+        tipos_preferidos = ficha.favoritos.filter(
+            categoria=Preferencia.Categoria.TIPO_ALIMENTO,
+            tipo_alimento__in=TipoAlimento.values,
+        ).values_list('tipo_alimento', flat=True)
+        if tipos_preferidos:
+            productos = productos.filter(
+                ~Q(tipo_producto=Producto.TipoProducto.ALIMENTO)
+                | Q(tipo_alimento__in=tipos_preferidos)
+            )
 
-    ordenes = {
-        'nombre': 'nombre',
-        'precio_asc': 'precio',
-        'precio_desc': '-precio',
-    }
-    productos = productos.order_by(ordenes.get(orden, 'nombre'))
+    precio_visible = Coalesce('precio_oferta', 'precio')
+    ordenes = {'precio_asc': precio_visible.asc(), 'precio_desc': precio_visible.desc()}
+    if orden in ordenes:
+        productos = productos.order_by(ordenes[orden], 'nombre', 'pk')
+    else:
+        productos = productos.order_by('nombre', 'pk')
 
     paginator = Paginator(productos, 12)
     page_obj = paginator.get_page(request.GET.get('page'))
@@ -127,9 +212,11 @@ def lista_productos(request):
         'tiendaApp/lista_productos.html',
         {
             'page_obj': page_obj,
+            'querystring': filtros.urlencode(),
             'q': q,
             'especie_actual': especie,
             'tipo_actual': tipo,
+            'tipo_alimento_actual': tipo_alimento,
             'edad_actual': edad,
             'raza_actual': tamano_raza,
             'grano_actual': tamano_grano,
@@ -143,10 +230,10 @@ def lista_productos(request):
                 *Producto.TipoProducto.choices,
                 (TIPO_JUGUETES_ACCESORIOS, 'Juguetes y accesorios'),
             ],
+            'tipos_alimento': TipoAlimento.choices,
             'edades': Producto.EtapaVida.choices,
             'razas': Producto.TamanoRaza.choices,
             'granos': TamanoGrano.choices,
-            'querystring': filtros.urlencode(),
         },
     )
 
@@ -163,7 +250,10 @@ def detalle_producto(request, producto_id):
             'producto': producto,
             'stock': getattr(producto, 'stock', None),
             'tamanos_grano': (
-                TamanoGrano.choices if producto.tipo_producto == Producto.TipoProducto.ALIMENTO else ()
+                TamanoGrano.choices
+                if producto.tipo_producto == Producto.TipoProducto.ALIMENTO
+                and producto.tipo_alimento != TipoAlimento.HUMEDO
+                else ()
             ),
         },
     )
@@ -174,27 +264,99 @@ def detalle_producto(request, producto_id):
 @require_http_methods(['GET', 'POST'])
 def gestion_productos(request):
     if request.method == 'POST':
-        form = ProveedorProductoForm(request.POST)
-        if form.is_valid() and 'proveedor' in request.POST:
-            proveedor = form.cleaned_data['proveedor']
-            with transaction.atomic():
-                producto = get_object_or_404(
-                    Producto.objects.select_for_update(), pk=form.cleaned_data['producto_id']
-                )
-                producto.proveedores.set([proveedor] if proveedor else [])
-            messages.success(request, f'Proveedor actualizado para {producto.nombre}.')
-        else:
-            messages.error(request, 'Elige un proveedor válido o selecciona «Sin proveedor».')
+        _guardar_asignaciones(request)
         return redirect('tiendaApp:gestion_productos')
 
     return render(
         request,
         'tiendaApp/gestion_productos.html',
         {
-            'productos': Producto.objects.prefetch_related('proveedores'),
+            'productos': Producto.objects.select_related('stock').prefetch_related('proveedores'),
+            'stock_inicial': Stock(),
             'proveedores': Proveedor.objects.all(),
         },
     )
+
+
+@staff_member_required(login_url='login')
+@permission_required(('tiendaApp.change_proveedor', 'tiendaApp.change_stock'), raise_exception=True)
+@require_http_methods(['GET', 'POST'])
+def solicitar_stock(request, producto_id):
+    if request.method == 'POST':
+        with transaction.atomic():
+            producto = get_object_or_404(Producto.objects.select_for_update(), pk=producto_id)
+            proveedores = producto.proveedores.all()
+            form = SolicitudStockForm(request.POST, proveedores=proveedores)
+            if form.is_valid():
+                cantidad = form.cleaned_data['cantidad']
+                proveedor = form.cleaned_data['proveedor']
+                maximo = connection.ops.integer_field_range('PositiveIntegerField')[1]
+                if cantidad <= maximo:
+                    Stock.objects.get_or_create(producto=producto)
+                    agregado = Stock.objects.filter(
+                        producto=producto, stock_bodega__lte=maximo - cantidad,
+                    ).update(stock_bodega=F('stock_bodega') + cantidad)
+                    if agregado:
+                        messages.success(
+                            request,
+                            f'Se simuló el contacto con {proveedor.nombre}. '
+                            f'Se agregaron {cantidad} unidades de {producto.nombre} a bodega.',
+                        )
+                        return redirect('tiendaApp:gestion_productos')
+                form.add_error('cantidad', 'La cantidad supera el máximo de stock en bodega.')
+    else:
+        producto = get_object_or_404(Producto, pk=producto_id)
+        proveedores = producto.proveedores.all()
+        form = SolicitudStockForm(proveedores=proveedores)
+
+    return render(
+        request,
+        'tiendaApp/solicitar_stock.html',
+        {
+            'producto': producto,
+            'proveedores': proveedores,
+            'stock': getattr(producto, 'stock', None) or Stock(),
+            'form': form,
+        },
+    )
+
+
+def _guardar_asignaciones(request):
+    datos = request.POST
+    if 'producto_id' in datos:
+        formularios = [ProveedorProductoForm(datos)]
+    else:
+        formularios = [
+            ProveedorProductoForm({'producto_id': campo.removeprefix('proveedor_'), 'proveedor': valor})
+            for campo, valor in datos.items()
+            if campo.startswith('proveedor_') and valor != datos.get(f'inicial_{campo}')
+        ]
+
+    if not formularios:
+        messages.info(request, 'No hay cambios para guardar.')
+        return
+
+    with transaction.atomic():
+        cambios = {}
+        for form in formularios:
+            if 'proveedor' not in form.data or not form.is_valid():
+                messages.error(request, 'Elige un proveedor válido o selecciona «Sin proveedor».')
+                return
+            cambios[form.cleaned_data['producto_id']] = form.cleaned_data['proveedor']
+
+        productos = list(Producto.objects.select_for_update().filter(pk__in=cambios).order_by('pk'))
+        if len(productos) != len(cambios):
+            messages.error(request, 'Uno de los productos seleccionados ya no está disponible.')
+            return
+
+        for producto in productos:
+            proveedor = cambios[producto.pk]
+            producto.proveedores.set([proveedor] if proveedor else [])
+
+    if len(productos) == 1:
+        messages.success(request, f'Proveedor actualizado para {productos[0].nombre}.')
+    else:
+        messages.success(request, f'Asignaciones guardadas para {len(productos)} productos.')
 
 
 @staff_member_required(login_url='login')
@@ -226,7 +388,7 @@ def editar_proveedor(request, proveedor_id=None):
 @login_required
 def mis_fichas(request):
     cliente = getattr(request.user, 'cliente_perfil', None)
-    fichas = cliente.fichas_mascotas.all() if cliente else []
+    fichas = cliente.fichas_mascotas.prefetch_related('alergias', 'favoritos') if cliente else []
     return render(request, 'tiendaApp/mis_fichas.html', {'fichas': fichas})
 
 
@@ -704,21 +866,25 @@ def entregas(request):
 @vendedor_requerido
 def jornadas(request):
     vendedor = request.user.vendedor_perfil
+    accion = request.POST.get('accion')
 
-    if request.method == 'POST':
-        accion = request.POST.get('accion')
-        if accion == 'abrir':
-            JornadaLaboral.abrir(vendedor)
-            messages.success(request, 'Jornada iniciada. ¡Buen turno!')
-            return redirect('tiendaApp:jornadas')
-        if accion == 'cerrar':
-            jornada = JornadaLaboral.objects.filter(vendedor=vendedor, fin__isnull=True).first()
-            if jornada:
-                jornada.cerrar(notas=request.POST.get('notas', ''))
-                messages.success(request, 'Jornada cerrada. Resumen abajo.')
-            return redirect('tiendaApp:jornadas')
+    if request.method == 'POST' and accion in ('abrir', 'cerrar'):
+        with transaction.atomic():
+            vendedor = Vendedor.objects.select_for_update().get(pk=vendedor.pk)
+            if accion == 'abrir':
+                JornadaLaboral.abrir(vendedor)
+                messages.success(request, 'Jornada iniciada. ¡Buen turno!')
+            else:
+                jornada = vendedor.jornadas.filter(fin__isnull=True).first()
+                if jornada:
+                    jornada.cerrar(notas=request.POST.get('notas', ''))
+                    messages.success(request, 'Jornada cerrada.')
 
-    jornadas_list = JornadaLaboral.objects.filter(vendedor=vendedor)
+        if request.POST.get('origen') == 'panel':
+            return redirect('tiendaApp:panel_vendedor')
+        return redirect('tiendaApp:jornadas')
+
+    jornadas_list = vendedor.jornadas.all()
     jornada_activa = jornadas_list.filter(fin__isnull=True).first()
     return render(
         request,

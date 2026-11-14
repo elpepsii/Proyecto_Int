@@ -1,7 +1,30 @@
 from django.contrib.auth.models import User
 from django.db import models
-from django.db.models import Sum
+from django.db.models import F, Sum
+from django.db.models.functions import Greatest
 from django.utils import timezone
+
+
+BANNERS_PREDETERMINADOS = (
+    'Ofertas de la semana',
+    'Alimento premium',
+    'Crea tu cuenta',
+    'Todo para tu mascota',
+)
+
+
+class Banner(models.Model):
+    posicion = models.PositiveSmallIntegerField(primary_key=True)
+    imagen = models.ImageField(upload_to='banners/', blank=True)
+    texto_alternativo = models.CharField(max_length=150)
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(posicion__range=(1, len(BANNERS_PREDETERMINADOS))),
+                name='banner_posicion_valida',
+            ),
+        ]
 
 
 class Especie(models.TextChoices):
@@ -14,6 +37,11 @@ class TamanoGrano(models.TextChoices):
     PEQUENO = 'pequeno', 'Grano pequeño'
     MEDIANO = 'mediano', 'Grano mediano'
     GRANDE = 'grande', 'Grano grande'
+
+
+class TipoAlimento(models.TextChoices):
+    SECO = 'seco', 'Seco'
+    HUMEDO = 'humedo', 'Húmedo'
 
 
 class OrigenVenta(models.TextChoices):
@@ -102,6 +130,12 @@ class Preferencia(models.Model):
 
     nombre = models.CharField(max_length=50, unique=True)
     categoria = models.CharField(max_length=20, choices=Categoria.choices)
+    tipo_alimento = models.CharField(
+        max_length=6,
+        choices=TipoAlimento.choices,
+        blank=True,
+        help_text='Vincula esta preferencia con el filtro de alimentos secos o húmedos.',
+    )
 
     class Meta:
         ordering = ['categoria', 'nombre']
@@ -162,6 +196,9 @@ class Producto(models.Model):
     )
     animal = models.CharField(max_length=30, choices=Especie.choices, default=Especie.PERRO)
     tipo_producto = models.CharField(max_length=30, choices=TipoProducto.choices)
+    tipo_alimento = models.CharField(
+        max_length=6, choices=TipoAlimento.choices, blank=True, verbose_name='Tipo de alimento'
+    )
     edad_producto = models.CharField(
         max_length=30, choices=EtapaVida.choices, default=EtapaVida.TODAS
     )
@@ -298,13 +335,10 @@ class Venta(models.Model):
 
     def descontar_stock(self):
         for producto_id, cantidad in self.detalles.values_list('producto_id', 'cantidad'):
-            stock = Stock.objects.filter(producto_id=producto_id).first()
-            if stock is None:
-                continue
-            de_sala = min(stock.stock_sala, cantidad)
-            stock.stock_sala -= de_sala
-            stock.stock_bodega = max(0, stock.stock_bodega - (cantidad - de_sala))
-            stock.save(update_fields=['stock_sala', 'stock_bodega'])
+            Stock.objects.filter(producto_id=producto_id).update(
+                stock_sala=Greatest(F('stock_sala') - cantidad, 0),
+                stock_bodega=Greatest(F('stock_bodega') - Greatest(cantidad - F('stock_sala'), 0), 0),
+            )
 
     def __str__(self):
         return (

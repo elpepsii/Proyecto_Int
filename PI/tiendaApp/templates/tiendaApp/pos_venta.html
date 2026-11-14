@@ -1,43 +1,49 @@
 {% extends "base.html" %}
+{% load humanize %}
 {% block title %}Venta POS · Lopets{% endblock %}
 {% block contenido %}
-<h1>🧾 Registro de venta presencial (POS)</h1>
-<p>Marca la cantidad de cada producto (RF-18). Al registrar: se crea la
-   Venta, el Pago queda AUTORIZADO, la venta pasa a COMPLETADA y el stock
-   se descuenta automáticamente (regla central en <code>Pago.save()</code>).</p>
+<a class="btn secundario volver-atras" href="{% url 'tiendaApp:panel_vendedor' %}">← Panel del vendedor</a>
+<div class="gestion-cabecera">
+    <h1>Registrar venta presencial</h1>
+    <a class="btn secundario" href="#cobro-pos">Ir al cobro ↓</a>
+</div>
 
-<form method="post">
+<form method="post" class="formulario-pos">
     {% csrf_token %}
 
-    <h2>1. Productos</h2>
-    <table>
-        <tr><th>Producto</th><th>Precio</th><th>Stock (sala/bodega)</th><th>Cantidad a vender</th></tr>
-        {% for producto in productos %}
-            <tr>
-                <td>{{ producto.nombre }} <small>[{{ producto.sku }}]</small></td>
-                <td>${{ producto.precio }}</td>
-                <td>
-                    {% if producto.stock %}
-                        {{ producto.stock.stock_sala }} / {{ producto.stock.stock_bodega }}
-                        {% if producto.stock.stock_total == 0 %}<span class="badge b-rojo">sin stock</span>{% endif %}
-                    {% else %}
-                        <span class="vacio">sin registro</span>
-                    {% endif %}
-                </td>
-                <td>
-                    <input type="number" name="cant_{{ producto.pk }}" value="{{ producto.cantidad_pos|default:'0' }}" min="0"
-                           {% if producto.stock %}max="{{ producto.stock.stock_total }}"{% else %}max="0"{% endif %}
-                           style="width:70px">
-                </td>
-            </tr>
-        {% endfor %}
-    </table>
+    <section aria-labelledby="productos-pos">
+        <h2 id="productos-pos">Productos de la venta</h2>
+        <div class="tabla-desplazable" role="region" aria-labelledby="productos-pos" tabindex="0">
+            <table>
+                <tr><th>Producto</th><th>Precio</th><th>Stock (sala/bodega)</th><th>Cantidad a vender</th></tr>
+                {% for producto in productos %}
+                    <tr>
+                        <td>{{ producto.nombre }} <small>[{{ producto.sku }}]</small></td>
+                        <td>${{ producto.precio|intcomma }}</td>
+                        <td>
+                            {% if producto.stock %}
+                                {{ producto.stock.stock_sala }} / {{ producto.stock.stock_bodega }}
+                                {% if producto.stock.stock_total == 0 %}<span class="badge b-rojo">Sin stock</span>{% endif %}
+                            {% else %}
+                                <span class="vacio">Sin registro</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <input type="number" class="cantidad-pos" aria-label="Cantidad de {{ producto.nombre }}"
+                                   name="cant_{{ producto.pk }}" value="{{ producto.cantidad_pos|default:'0' }}"
+                                   min="0" max="{{ producto.stock.stock_total|default:'0' }}">
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </section>
 
-    <h2 style="margin-top:1rem">2. Cobro</h2>
-    <div class="card" style="max-width:520px">
+    <section class="card cobro-pos" aria-labelledby="cobro-pos">
+        <h2 id="cobro-pos">Cobro</h2>
         {{ form.non_field_errors }}
         {% include 'tiendaApp/campos_venta.html' with form=form only %}
-        <button class="btn" type="submit">Registrar venta y cobrar</button>
-    </div>
+        <button class="btn azul" type="submit">Registrar venta y cobrar</button>
+    </section>
 </form>
 {% endblock %}

@@ -1,38 +1,41 @@
 {% extends "base.html" %}
+{% load humanize %}
 {% block title %}Entregas · Lopets{% endblock %}
 {% block contenido %}
-<h1>📦 Pedidos web por entregar (RF-20)</h1>
-<p>Avanza el estado de cada entrega: preparando → en despacho / listo para
-   retiro → entregado.</p>
+<a class="btn secundario volver-atras" href="{% url 'tiendaApp:panel_vendedor' %}">← Panel del vendedor</a>
+<h1>Entregas pendientes</h1>
+<p>Actualiza el estado de los pedidos a domicilio y con retiro en tienda.</p>
 
 {% if entregas %}
-    <table>
-        <tr><th>#</th><th>Venta</th><th>Cliente</th><th>Tipo</th><th>Dirección</th><th>Estado actual</th><th>Avanzar a</th></tr>
-        {% for entrega in entregas %}
-            <tr>
-                <td>{{ entrega.pk }}</td>
-                <td><a href="{% url 'tiendaApp:detalle_venta' entrega.venta_id %}">Venta #{{ entrega.venta_id }}</a>
-                    (${{ entrega.venta.total }})</td>
-                <td>{{ entrega.venta.cliente|default:"—" }}</td>
-                <td>{{ entrega.get_tipo_display }}</td>
-                <td>{{ entrega.direccion_entrega }}</td>
-                <td><span class="badge b-azul">{{ entrega.get_estado_display }}</span></td>
-                <td>
-                    <form method="post" style="display:flex;gap:.3rem">
-                        {% csrf_token %}
-                        <input type="hidden" name="entrega_id" value="{{ entrega.pk }}">
-                        <select name="nuevo_estado">
-                            {% for valor, nombre in estados_entrega %}
-                                <option value="{{ valor }}">{{ nombre }}</option>
-                            {% endfor %}
-                        </select>
-                        <button class="btn mini" type="submit">Actualizar</button>
-                    </form>
-                </td>
-            </tr>
-        {% endfor %}
-    </table>
+    <div class="tabla-desplazable" role="region" aria-label="Pedidos por entregar" tabindex="0">
+        <table>
+            <tr><th>#</th><th>Venta</th><th>Cliente</th><th>Tipo</th><th>Dirección</th><th>Estado actual</th><th>Cambiar estado</th></tr>
+            {% for entrega in entregas %}
+                <tr>
+                    <td>{{ entrega.pk }}</td>
+                    <td><a class="btn mini secundario" href="{% url 'tiendaApp:detalle_venta' entrega.venta_id %}?desde=entregas">Venta #{{ entrega.venta_id }}</a>
+                        (${{ entrega.venta.total|intcomma }})</td>
+                    <td>{{ entrega.venta.cliente|default:"—" }}</td>
+                    <td>{{ entrega.get_tipo_display }}</td>
+                    <td>{{ entrega.direccion_entrega }}</td>
+                    <td><span class="badge b-azul">{{ entrega.get_estado_display }}</span></td>
+                    <td>
+                        <form method="post" class="formulario-estado">
+                            {% csrf_token %}
+                            <input type="hidden" name="entrega_id" value="{{ entrega.pk }}">
+                            <select name="nuevo_estado" aria-label="Estado de la entrega {{ entrega.pk }}">
+                                {% for valor, nombre in estados_entrega %}
+                                    <option value="{{ valor }}"{% if valor == entrega.estado %} selected{% endif %}>{{ nombre }}</option>
+                                {% endfor %}
+                            </select>
+                            <button class="btn mini azul" type="submit">Actualizar</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
 {% else %}
-    <p class="vacio">No hay pedidos web pendientes de entrega. 🎉</p>
+    <p class="vacio">No hay pedidos pendientes de entrega.</p>
 {% endif %}
 {% endblock %}

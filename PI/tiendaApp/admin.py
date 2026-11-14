@@ -1,9 +1,17 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.core.exceptions import ValidationError
+from django.shortcuts import redirect
 from django.utils.html import format_html
 
-from .forms import ProveedorAdminForm, TelefonoField, VendedorAdminForm, VentaAdminForm
-
+from .almacenamiento import ErrorAlmacenamiento
+from .forms import (
+    PreferenciaAdminForm,
+    ProductoAdminForm,
+    ProveedorAdminForm,
+    TelefonoField,
+    VendedorAdminForm,
+    VentaAdminForm,
+)
 from .models import (
     Administrador,
     Alergia,
@@ -30,6 +38,7 @@ class StockInline(admin.StackedInline):
 
 @admin.register(Producto)
 class ProductoAdmin(admin.ModelAdmin):
+    form = ProductoAdminForm
     list_display = (
         'miniatura',
         'sku',
@@ -37,14 +46,25 @@ class ProductoAdmin(admin.ModelAdmin):
         'precio',
         'precio_oferta',
         'tipo_producto',
+        'tipo_alimento',
         'animal',
         'activo',
     )
     list_editable = ('precio_oferta', 'activo')
-    list_filter = ('activo', 'tipo_producto', 'animal', 'edad_producto')
+    list_filter = ('activo', 'tipo_producto', 'tipo_alimento', 'animal', 'edad_producto')
     search_fields = ('sku', 'nombre')
     filter_horizontal = ('alergenos_contenidos',)
     inlines = [StockInline]
+
+    class Media:
+        js = ('js/tipo-alimento-admin.js',)
+
+    def changeform_view(self, request, object_id=None, form_url='', extra_context=None):
+        try:
+            return super().changeform_view(request, object_id, form_url, extra_context)
+        except ErrorAlmacenamiento as error:
+            self.message_user(request, str(error), level=messages.ERROR)
+            return redirect(request.path)
 
     @admin.display(description='Foto')
     def miniatura(self, obj):
@@ -79,7 +99,8 @@ class AlergiaAdmin(admin.ModelAdmin):
 
 @admin.register(Preferencia)
 class PreferenciaAdmin(admin.ModelAdmin):
-    list_display = ('nombre', 'categoria')
+    form = PreferenciaAdminForm
+    list_display = ('nombre', 'categoria', 'tipo_alimento')
     list_filter = ('categoria',)
     search_fields = ('nombre',)
 

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Solicitar stock · Lopets{% endblock %}
+{% block contenido %}
+<a class="volver-atras" href="{% url 'tiendaApp:gestion_productos' %}">← Gestión de productos</a>
+<h1>Solicitar stock</h1>
+
+<section class="card formulario-gestion reposicion-stock" aria-labelledby="reposicion-producto">
+    <h2 id="reposicion-producto">{{ producto.nombre }}</h2>
+    <p>{{ producto.sku }} · {{ stock.stock_total }} unidades en stock · Mínimo {{ stock.stock_minimo }}</p>
+
+    {% if proveedores %}
+        <h3>{% if proveedores|length == 1 %}Proveedor{% else %}Proveedores asignados{% endif %}</h3>
+        {% for proveedor in proveedores %}
+            <address class="reposicion-proveedor">
+                <strong>{{ proveedor.nombre }}</strong>
+                {% if proveedor.run_empresa %}<span>RUT {{ proveedor.run_empresa }}</span>{% endif %}
+                <span>{{ proveedor.correo }}</span>
+                <span>{{ proveedor.fono }}</span>
+            </address>
+        {% endfor %}
+
+        <form method="post">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <p>La solicitud simula el contacto con el proveedor y agrega las unidades a bodega.</p>
+            <div class="acciones">
+                <button class="btn azul" type="submit">Enviar solicitud</button>
+                <a class="btn secundario" href="{% url 'tiendaApp:gestion_productos' %}">Cancelar</a>
+            </div>
+        </form>
+    {% else %}
+        <p>Asigna y guarda un proveedor en la tabla para solicitar stock.</p>
+    {% endif %}
+</section>
+{% endblock %}

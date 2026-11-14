@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}Gestión de productos · Lopets{% endblock %}
 {% block contenido %}
 <a class="volver-atras" href="{% url 'tiendaApp:home' %}#panel-administrador">← Panel de administrador</a>
@@ -9,46 +10,70 @@
 <p>Elige un proveedor por producto o déjalo sin proveedor. Al guardar, se reemplaza la asignación actual.</p>
 
 {% if productos %}
-    <div class="gestion-productos-tabla" role="region" aria-label="Proveedores por producto" tabindex="0">
-        <table>
-            <thead>
-                <tr>
-                    <th scope="col">Producto</th>
-                    <th scope="col">Proveedor actual</th>
-                    <th scope="col">Asignación</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for producto in productos %}
-                    {% with asociados=producto.proveedores.all %}
-                        <tr>
-                            <th scope="row">
-                                {{ producto.nombre }}<br>
-                                <small>{{ producto.sku }}{% if not producto.activo %} · Inactivo{% endif %}</small>
-                            </th>
-                            <td>{{ asociados|join:", "|default:"Sin proveedor" }}</td>
-                            <td>
-                                <form method="post" class="gestion-productos-form">
-                                    {% csrf_token %}
-                                    <input type="hidden" name="producto_id" value="{{ producto.pk }}">
-                                    <select name="proveedor" aria-label="Proveedor de {{ producto.nombre }}">
-                                        {% if asociados|length > 1 %}
-                                            <option value="elegir" selected>Elige una asignación</option>
+    <form method="post" id="asignar-proveedores">
+        {% csrf_token %}
+        <div class="tabla-desplazable gestion-productos-tabla" role="region" aria-label="Stock y proveedores por producto" tabindex="0">
+            <table>
+                <thead>
+                    <tr>
+                        <th scope="col">Producto</th>
+                        <th scope="col">Stock</th>
+                        <th scope="col">Proveedor actual</th>
+                        <th scope="col">Asignación</th>
+                        {% if perms.tiendaApp.change_stock %}<th scope="col">Reposición</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for producto in productos %}
+                        {% with asociados=producto.proveedores.all stock=producto.stock|default:stock_inicial %}
+                            <tr>
+                                <th scope="row"{% if stock.stock_total < stock.stock_minimo %} class="producto-stock-bajo"{% endif %}>
+                                    {{ producto.nombre }}<br>
+                                    <small>{{ producto.sku }}{% if not producto.activo %} · Inactivo{% endif %}</small>
+                                </th>
+                                <td class="gestion-stock">
+                                    <strong>{{ stock.stock_total }}</strong> unidades
+                                    <small>Sala {{ stock.stock_sala }} · Bodega {{ stock.stock_bodega }}</small>
+                                    <small>Mínimo {{ stock.stock_minimo }}{% if stock.stock_total < stock.stock_minimo %} · Bajo el mínimo{% endif %}</small>
+                                </td>
+                                <td>{{ asociados|join:", "|default:"Sin proveedor" }}</td>
+                                <td>
+                                        <input type="hidden" name="inicial_proveedor_{{ producto.pk }}"
+                                               value="{% if asociados|length > 1 %}elegir{% elif asociados %}{{ asociados.0.pk }}{% endif %}">
+                                        <select name="proveedor_{{ producto.pk }}" aria-label="Proveedor de {{ producto.nombre }}">
+                                            {% if asociados|length > 1 %}
+                                                <option value="elegir" selected>Elige una asignación</option>
+                                            {% endif %}
+                                            <option value="">Sin proveedor</option>
+                                            {% for proveedor in proveedores %}
+                                                <option value="{{ proveedor.pk }}"{% if asociados|length == 1 and asociados.0.pk == proveedor.pk %} selected{% endif %}>{{ proveedor.nombre }}{% if proveedor.run_empresa %} · {{ proveedor.run_empresa }}{% endif %}</option>
+                                            {% endfor %}
+                                        </select>
+                                </td>
+                                {% if perms.tiendaApp.change_stock %}
+                                    <td class="gestion-reposicion">
+                                        {% if asociados %}
+                                            <a class="btn secundario" href="{% url 'tiendaApp:solicitar_stock' producto.pk %}"
+                                               aria-label="Solicitar stock de {{ producto.nombre }}">Solicitar stock</a>
+                                        {% else %}
+                                            <button class="btn secundario" type="button" disabled>Solicitar stock</button>
+                                            <small>Asigna y guarda un proveedor.</small>
                                         {% endif %}
-                                        <option value="">Sin proveedor</option>
-                                        {% for proveedor in proveedores %}
-                                            <option value="{{ proveedor.pk }}"{% if asociados|length == 1 and asociados.0.pk == proveedor.pk %} selected{% endif %}>{{ proveedor.nombre }}{% if proveedor.run_empresa %} · {{ proveedor.run_empresa }}{% endif %}</option>
-                                        {% endfor %}
-                                    </select>
-                                    <button type="submit" class="btn azul" aria-label="Guardar proveedor de {{ producto.nombre }}">Guardar</button>
-                                </form>
-                            </td>
-                        </tr>
-                    {% endwith %}
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+                                    </td>
+                                {% endif %}
+                            </tr>
+                        {% endwith %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="guardar-asignaciones">
+            <span id="cambios-asignaciones" role="status"></span>
+            <button class="btn azul" id="guardar-asignaciones" type="submit" hidden>Guardar cambios</button>
+            <noscript><button class="btn azul" type="submit">Guardar cambios</button></noscript>
+        </div>
+    </form>
+    <script src="{% static 'js/asignar-proveedores.js' %}" defer></script>
 {% else %}
     <p class="vacio">Aún no hay productos registrados.</p>
 {% endif %}
